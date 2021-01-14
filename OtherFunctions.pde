@@ -42,3 +42,14 @@ ArrayList <String> CloneStrings (ArrayList <String> In) { // I use this because 
   return Output;
 }
 */
+
+
+
+
+
+boolean StringListContains (ArrayList <String> In, String Element) {
+  for (String S : In) {
+    if (S.equals(Element)) return true;
+  }
+  return false;
+}

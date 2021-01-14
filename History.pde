@@ -8,6 +8,9 @@ class History_Class {
   
   
   
+  //ArrayList <String> SavedUndoChainNames = new ArrayList <String> ();
+  //ArrayList <ArrayList <ArrayList <String>>> AllSavedPages = new ArrayList <ArrayList <ArrayList <String>>> ();
+  
   ArrayList <ArrayList <String>> SavedPages = new ArrayList <ArrayList <String>> ();
   ArrayList <ArrayList <String>> SavedPageNames = new ArrayList <ArrayList <String>> ();
   int CurrentIndex = -1;
@@ -18,6 +21,12 @@ class History_Class {
   
   void Init() {
     MaxUndoChain = Settings.GetInt ("max undo chain", 100);
+    /*
+    for (String S : PageManager.AllPageNames) {
+      SavedUndoChainNames.add (S);
+      AllSavedPages.add (new ArrayList <ArrayList <String>> ());
+    }
+    */
   }
   
   
@@ -58,6 +67,33 @@ class History_Class {
     PageManager.CalcTotal();
     ResetValueElements();
   }
+  
+  
+  
+  void Reset() {
+    SavedPages = new ArrayList <ArrayList <String>> ();
+    SavedPageNames = new ArrayList <ArrayList <String>> ();
+    CurrentIndex = -1;
+  }
+  
+  
+  
+  /*
+  void SwitchToPage (String NewPageName) {
+    
+    boolean Found = false;
+    for (int i = 0; i < SavedUndoChainNames.size(); i ++) {
+      if (SavedUndoChainNames.get(i).equals(NewPageName)) {
+        SavedPages = AllSavedPages.get(i);
+        Found = true;
+        break;
+      }
+    }
+    
+    if (!Found) println ("Error: " + NewPageName + " was not found");
+    
+  }
+  */
   
   
   

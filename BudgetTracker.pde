@@ -12,7 +12,7 @@
 Change log:
 
 A 1.1.0: 01/14/21
-Added more to page selector
+Finished page selector (mostly)
 Fixed many bugs
 Made many small improvements
 
@@ -46,6 +46,7 @@ void keyPressed() {
     key = 0;
   }
   if (key == 10) OnEnterKeyPressed();
+  /*
   if (key == 'a') {
     println();
     println();
@@ -53,6 +54,7 @@ void keyPressed() {
     println ("All Page Names:");
     for (String S : PageManager.AllPageNames) println (S);
   }
+  */
 }
 
 void keyReleased() {

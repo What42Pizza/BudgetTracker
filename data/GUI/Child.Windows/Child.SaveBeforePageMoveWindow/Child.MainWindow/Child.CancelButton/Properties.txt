@@ -1,0 +1,20 @@
+Name:
+CancelButton
+
+ElementType:
+TextButton
+
+XPos:
+0.05
+YPos:
+0.6
+XSize:
+0.267
+YSize:
+0.3
+
+Text:
+Cancel
+
+ButtonAction:
+Disable this.Parent.Parent

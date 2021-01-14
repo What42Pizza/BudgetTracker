@@ -1,0 +1,25 @@
+Name:
+CloseButton
+
+ElementType:
+TextButton
+
+XPos:
+0.9
+YPos:
+0
+XSize:
+0.1
+YSize:
+1
+
+YPixelOffset:
+1
+XSizePixelOffset:
+-1
+
+Text:
+X
+
+ButtonAction:
+Disable this.Parent.Parent

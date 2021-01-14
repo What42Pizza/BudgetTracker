@@ -80,6 +80,8 @@ class PageManager_Class {
     } else {
       println ("Error: page " + '"' + PageName + '"' + " was not found.");
     }
+    History.Reset();
+    //History.SwitchToPage (CurrentPage.get(0));
   }
   
   
@@ -103,6 +105,7 @@ class PageManager_Class {
   void Save() {
     SaveCurrentPage();
     SaveAllPageNames();
+    RemoveUnneededPages();
     Settings.SetDataString ("latest page", PageManager.CurrentPage.get(0));
     ChangesSaved = true;
   }
@@ -126,6 +129,29 @@ class PageManager_Class {
     for (String S : AllPageNames) PageNamesOutput.println (S);
     PageNamesOutput.flush();
     PageNamesOutput.close();
+  }
+  
+  
+  
+  void RemoveUnneededPages() {
+    
+    // Get vars
+    String[] AllPageFiles = PagesFolder.list();
+    ArrayList <String> AllPageFileNames = (ArrayList <String>) AllPageNames.clone();
+    
+    // Get list of needed file names
+    for (int i = 0; i < AllPageFileNames.size(); i ++) {
+      AllPageFileNames.add (i, GetPageFileName (AllPageFileNames.remove (i)));
+    }
+    
+    // Remove files not on list
+    for (String PageFileName : AllPageFiles) {
+      if (!StringListContains (AllPageFileNames, PageFileName)) { // O(n^2), not good
+        File PageToRemove = new File (dataPath("") + "/Pages/" + PageFileName);
+        PageToRemove.delete();
+      }
+    }
+    
   }
   
   
@@ -162,6 +188,7 @@ class PageManager_Class {
   void CreateBasicPage() {
     CurrentPage = CreateNewPage();
     AllPageNames.add(CurrentPage.get(0));
+    //History.SwitchToPage (CurrentPage.get(0));
     CalcTotal();
     ResetValueElements();
     ChangesSaved = true;

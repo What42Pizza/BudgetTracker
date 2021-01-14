@@ -1,0 +1,11 @@
+Name:
+SelectedPageName
+
+ElementType:
+Holder
+
+Enabled:
+false
+
+Text:
+This is where the page's name is stored

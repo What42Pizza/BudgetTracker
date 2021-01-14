@@ -35,6 +35,11 @@ GUI_Element GUI_SaveBeforeNewPageWindow;
 GUI_Element GUI_SBNPW_CreatePageWOSavingButton;
 GUI_Element GUI_SBNPW_CreatePageWSavingButton;
 
+GUI_Element GUI_SaveBeforePageMoveWindow;
+GUI_Element GUI_SBPMW_MoveWSavingButton;
+GUI_Element GUI_SBPMW_MoveWOSavingButton;
+GUI_Element GUI_SBPMW_SelectedPageName;
+
 
 
 
@@ -85,6 +90,11 @@ void InitGUI() {
   GUI_SBNPW_CreatePageWOSavingButton = GUI_SaveBeforeNewPageWindow.Child("MainWindow").Child("CreatePageWithoutSavingButton");
   GUI_SBNPW_CreatePageWSavingButton = GUI_SaveBeforeNewPageWindow.Child("MainWindow").Child("CreatePageWithSavingButton");
   
+  GUI_SaveBeforePageMoveWindow = Windows.Child("SaveBeforePageMoveWindow");
+  GUI_SBPMW_MoveWSavingButton = GUI_SaveBeforePageMoveWindow.Child("MainWindow").Child("MovePageWithSavingButton");
+  GUI_SBPMW_MoveWOSavingButton = GUI_SaveBeforePageMoveWindow.Child("MainWindow").Child("MovePageWithoutSavingButton");
+  GUI_SBPMW_SelectedPageName = GUI_SaveBeforePageMoveWindow.Child("SelectedPageName");
+  
   
   
   // Set button actions
@@ -125,7 +135,27 @@ void InitGUI() {
     GUI_SBNPW_CreatePageWOSavingButton.Pressed = false;
     GUI_PageSelector.Enabled = false; // This is needed because of PageSelector.CreatePageButton
     GUI_PageEditor.Enabled = true;
+    CloseAllWindows();
   }};
+  
+  
+  // SaveBeforePageMoveWindow.MoveWSavingButton
+  GUI_SBPMW_MoveWSavingButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
+    PageManager.Save();
+    GUI_SBPMW_MoveWOSavingButton.OnButtonPressed.Run (null);
+  }};
+  
+  
+  // SaveBeforePageMoveWindow.MoveWOSavingButton
+  GUI_SBPMW_MoveWOSavingButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
+    PageManager.LoadPage (GUI_SBPMW_SelectedPageName.Text);
+      GUI_PageSelector.Enabled = false;
+      GUI_PageEditor.Enabled = true;
+      CloseAllWindows();
+  }};
+  
+  
+  
   
   
   // NewPageButton
@@ -187,6 +217,8 @@ void InitGUI() {
   
   
   
+  
+  
   // PageSelector.BackButton
   GUI_PageSelector_BackButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     GUI_PageSelector.Enabled = false;
@@ -196,13 +228,6 @@ void InitGUI() {
   
   
   // PageSelector.CreatePageButton
-  /*
-  GUI_PageSelector_CreatePageButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
-    GUI_PageEditor_NewPageButton.OnButtonPressed.Run (null); // Normally you shouldn't pass null, but I made this Action so I know it's safe
-    //GUI_PageSelector.Enabled = false; // Moved to SBNPW.CreatePageWOSavingButton bc this might open a window, in which case this code shouldn't run yet
-    //GUI_PageEditor.Enabled = true;
-  }};
-  */
   GUI_PageSelector_CreatePageButton.OnButtonPressed = GUI_PageEditor_NewPageButton.OnButtonPressed;
   
   
@@ -213,7 +238,8 @@ void InitGUI() {
       GUI_PageSelector.Enabled = false;
       GUI_PageEditor.Enabled = true;
     } else {
-      println ("WIP, SaveBefore___Window needs to open");
+      GUI_SBPMW_SelectedPageName.Text = This.Text;
+      GUI_SaveBeforePageMoveWindow.Enabled = true;
     }
   }};
   
@@ -467,6 +493,7 @@ void SetDraggables (GUI_Element HoveredWindow) {
   if (!GUI_ConfirmExitWindow.IsDragging) GUI_ConfirmExitWindow.Draggable = false;
   if (!GUI_SaveBeforeExitWindow.IsDragging) GUI_SaveBeforeExitWindow.Draggable = false;
   if (!GUI_SaveBeforeNewPageWindow.IsDragging) GUI_SaveBeforeNewPageWindow.Draggable = false;
+  if (!GUI_SaveBeforePageMoveWindow.IsDragging) GUI_SaveBeforePageMoveWindow.Draggable = false;
   
   // Set Hovered as draggable
   if (HoveredWindow != null) {
@@ -480,9 +507,10 @@ void SetDraggables (GUI_Element HoveredWindow) {
 
 
 GUI_Element GetHoveredWindow() {
-  if (WindowIsHovered (GUI_SaveBeforeExitWindow   )) return GUI_SaveBeforeExitWindow   ;
-  if (WindowIsHovered (GUI_ConfirmExitWindow      )) return GUI_ConfirmExitWindow      ;
-  if (WindowIsHovered (GUI_SaveBeforeNewPageWindow)) return GUI_SaveBeforeNewPageWindow;
+  if (WindowIsHovered (GUI_SaveBeforeExitWindow    )) return GUI_SaveBeforeExitWindow    ;
+  if (WindowIsHovered (GUI_ConfirmExitWindow       )) return GUI_ConfirmExitWindow       ;
+  if (WindowIsHovered (GUI_SaveBeforeNewPageWindow )) return GUI_SaveBeforeNewPageWindow ;
+  if (WindowIsHovered (GUI_SaveBeforePageMoveWindow)) return GUI_SaveBeforePageMoveWindow;
   return null;
 }
 
@@ -498,4 +526,5 @@ void CloseAllWindows() {
   GUI_ConfirmExitWindow.Enabled = false;
   GUI_SaveBeforeExitWindow.Enabled = false;
   GUI_SaveBeforeNewPageWindow.Enabled = false;
+  GUI_SaveBeforePageMoveWindow.Enabled = false;
 }
