@@ -1,0 +1,17 @@
+Name:
+AddValueButton
+
+ElementType:
+TextButton
+
+XPos:
+0
+YPos:
+0.9
+XSize:
+0.4
+YSize:
+0.1
+
+Text:
+Add

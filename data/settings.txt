@@ -1,0 +1,19 @@
+Settings
+
+
+
+fullscreen: false
+(default: false)
+
+window size: 1200x675
+(default: 1200x675)
+
+
+
+page name preset: [month]/--/[year]
+(default: [month]/--/[year])
+
+
+
+max undo chain: 100
+(default: 100)

@@ -1,0 +1,17 @@
+Name:
+SelectPageButton
+
+ElementType:
+TextButton
+
+XPos:
+0.21
+YPos:
+0.05
+XSize:
+0.13
+YSize:
+0.09
+
+Text:
+Select Page

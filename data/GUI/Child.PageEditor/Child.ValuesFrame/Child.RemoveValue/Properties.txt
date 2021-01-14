@@ -1,0 +1,17 @@
+Name:
+RemoveValueButton
+
+ElementType:
+TextButton
+
+XPos:
+0.4
+YPos:
+0.9
+XSize:
+0.6
+YSize:
+0.1
+
+Text:
+Remove

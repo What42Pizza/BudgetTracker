@@ -1,0 +1,17 @@
+Name:
+PageName
+
+ElementType:
+TextFrame
+
+XPos:
+0.35
+YPos:
+0.05
+XSize:
+0.3
+YSize:
+0.1
+
+Text:
+Page Selector
