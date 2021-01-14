@@ -24,3 +24,6 @@ EdgeSize:
 
 TextResetsOnEdit:
 false
+
+TextResetsIfEqualing:
+empty

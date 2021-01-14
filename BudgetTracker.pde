@@ -1,7 +1,7 @@
 // Started 01/06/20
-// Last updated 01/13/20
+// Last updated 01/14/20
 
-// A 1.0.0
+// A 1.1.0
 
 
 
@@ -10,6 +10,11 @@
 /*
 
 Change log:
+
+A 1.1.0: 01/14/21
+Added more to page selector
+Fixed many bugs
+Made many small improvements
 
 A 1.0.0: 01/13/21
 Finished page editor (mostly)
@@ -41,6 +46,13 @@ void keyPressed() {
     key = 0;
   }
   if (key == 10) OnEnterKeyPressed();
+  if (key == 'a') {
+    println();
+    println();
+    println();
+    println ("All Page Names:");
+    for (String S : PageManager.AllPageNames) println (S);
+  }
 }
 
 void keyReleased() {

@@ -38,6 +38,7 @@ public class GUI_Element implements Cloneable {
   public String  PlaceholderText = "Click to enter text";
   public boolean UsePlaceholderText = true;
   public boolean TextResetsOnEdit = true;
+  public String  TextResetsIfEqualing = null;
   public color   TextColor = color (0);
   public float   TextSize = 0.9;
   public String  TextSizeIsRelativeTo = "FRAME"; // This has to be either "FRAME" or "SCREEN"
@@ -398,8 +399,7 @@ public class GUI_Element implements Cloneable {
     
     if (JustClicked()) {
       TextIsBeingEdited = true;
-      if (TextResetsOnEdit)
-        Text = "";
+      if (TextResetsOnEdit || (TextResetsIfEqualing != null && Text.equals(TextResetsIfEqualing))) Text = "";
     }
     
     if (TextIsBeingEdited) {
@@ -669,7 +669,7 @@ public class GUI_Element implements Cloneable {
   
   
   
-  public GUI_Element Child (String ChildName) {
+  public GUI_Element Child (String ChildName, boolean PrintError) {
     if (ChildName == null) {
       println ("Error in " + this + ": You cannot search for a child with a null name.");
       return null;
@@ -679,7 +679,12 @@ public class GUI_Element implements Cloneable {
         return E;
       }
     }
+    if (PrintError) println ("WARNING: GUI_Element " + ChildName + " could not be found in " + this + ".");
     return null;
+  }
+  
+  public GUI_Element Child (String ChildName) {
+    return Child (ChildName, true);
   }
   
   

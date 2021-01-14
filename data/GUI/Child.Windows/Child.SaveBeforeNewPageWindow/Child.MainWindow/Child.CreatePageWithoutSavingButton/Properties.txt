@@ -15,6 +15,3 @@ YSize:
 
 Text:
 No
-
-ButtonAction:
-Exit

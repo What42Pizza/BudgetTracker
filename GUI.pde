@@ -4,6 +4,9 @@ GUI_Element GUI_ExitButton;
 
 GUI_Element GUI_PageSelector;
 GUI_Element GUI_PageSelector_BackButton;
+GUI_Element GUI_PageSelector_CreatePageButton;
+GUI_Element GUI_PageSelector_PagePreset;
+GUI_Element GUI_PageSelector_AllPages;
 
 GUI_Element GUI_PageEditor;
 
@@ -47,7 +50,12 @@ void InitGUI() {
   GUI_ExitButton = GUI_Main.Child("ExitButton");
   
   GUI_PageSelector = GUI_Main.Child("PageSelector");
+  
+  GUI_Element PagesFrame = GUI_PageSelector.Child("PagesFrame");
   GUI_PageSelector_BackButton = GUI_PageSelector.Child("BackButton");
+  GUI_PageSelector_CreatePageButton = PagesFrame.Child("CreatePageButton");
+  GUI_PageSelector_PagePreset = PagesFrame.Child("PagePreset");
+  GUI_PageSelector_AllPages = PagesFrame.Child("AllPages");
   
   GUI_PageEditor = GUI_Main.Child("PageEditor");
   
@@ -94,39 +102,36 @@ void InitGUI() {
   
   // SaveBeforeExitWindow.ExitWSavingButton
   GUI_SaveBeforeExitWindow_ExitWSavingButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
-    PageManager.SaveCurrentPage();
+    PageManager.Save();
     Close();
   }};
   
   
   // SaveBeforeNewPageWindow_CreatePagWSavingButton
   GUI_SBNPW_CreatePageWSavingButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
-    PageManager.SaveCurrentPage();
-    PageManager.CreateBasicPage();
-    History.AddSavePoint();
-    PageManager.ChangesSaved = false;
-    GUI_SaveBeforeNewPageWindow.Enabled = false;
-    GUI_SBNPW_CreatePageWSavingButton.Pressed = false;
+    PageManager.Save();
+    GUI_SBNPW_CreatePageWOSavingButton.OnButtonPressed.Run (null);
+    GUI_SBNPW_CreatePageWSavingButton.Pressed = false; // Wait is this really needed?
   }};
   
   
   // SaveBeforeNewPageWindow_CreatePageWOSavingButton
   GUI_SBNPW_CreatePageWOSavingButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     PageManager.CreateBasicPage();
+    ResetValueElements();
     History.AddSavePoint();
     PageManager.ChangesSaved = false;
     GUI_SaveBeforeNewPageWindow.Enabled = false;
     GUI_SBNPW_CreatePageWOSavingButton.Pressed = false;
+    GUI_PageSelector.Enabled = false; // This is needed because of PageSelector.CreatePageButton
+    GUI_PageEditor.Enabled = true;
   }};
   
   
   // NewPageButton
   GUI_PageEditor_NewPageButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     if (PageManager.ChangesSaved) {
-      PageManager.CreateBasicPage();
-      PageManager.ResetGUIElements();
-      History.AddSavePoint();
-      PageManager.ChangesSaved = false;
+      GUI_SBNPW_CreatePageWOSavingButton.OnButtonPressed.Run (null);
     } else {
       GUI_SaveBeforeNewPageWindow.Enabled = !GUI_SaveBeforeNewPageWindow.Enabled;
     }
@@ -137,13 +142,14 @@ void InitGUI() {
   GUI_PageEditor_SelectPageButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     GUI_PageEditor.Enabled = false;
     GUI_PageSelector.Enabled = true;
+    ResetPageElements();
     CloseAllWindows();
   }};
   
   
   // SaveButton
   GUI_PageEditor_SaveButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
-    PageManager.SaveCurrentPage();
+    PageManager.Save();
     GUI_PageEditor_SaveButton.Text = "Saved!";
     SaveButton_FramesUntilReset = (int) frameRate; // Wait ~1 second
   }};
@@ -186,6 +192,29 @@ void InitGUI() {
     GUI_PageSelector.Enabled = false;
     GUI_PageEditor.Enabled = true;
     CloseAllWindows();
+  }};
+  
+  
+  // PageSelector.CreatePageButton
+  /*
+  GUI_PageSelector_CreatePageButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
+    GUI_PageEditor_NewPageButton.OnButtonPressed.Run (null); // Normally you shouldn't pass null, but I made this Action so I know it's safe
+    //GUI_PageSelector.Enabled = false; // Moved to SBNPW.CreatePageWOSavingButton bc this might open a window, in which case this code shouldn't run yet
+    //GUI_PageEditor.Enabled = true;
+  }};
+  */
+  GUI_PageSelector_CreatePageButton.OnButtonPressed = GUI_PageEditor_NewPageButton.OnButtonPressed;
+  
+  
+  // PageSelector.PagePreset
+  GUI_PageSelector_PagePreset.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
+    if (PageManager.ChangesSaved) {
+      PageManager.LoadPage (This.Text);
+      GUI_PageSelector.Enabled = false;
+      GUI_PageEditor.Enabled = true;
+    } else {
+      println ("WIP, SaveBefore___Window needs to open");
+    }
   }};
   
   
@@ -285,6 +314,7 @@ void UpdatePageEditorElements() {
     GUI_Element E = GUI_PageEditor_AllValues.Children.get(i);
     if (E.Child("RemoveButton").JustClicked()) {
       PageManager.CurrentPage.remove (i + 1);
+      //PageManager.CalcTotal(); // Not needed because RemoveValueElement calls this
       RemoveValueElement (i, E);
       History.AddSavePoint();
       PageManager.ChangesSaved = false;
@@ -296,6 +326,20 @@ void UpdatePageEditorElements() {
 }
 
 
+
+
+
+
+
+
+
+
+void ResetValueElements() {
+  GUI_PageEditor_AllValues.DeleteChildren();
+  for (int i = 1; i < PageManager.CurrentPage.size(); i ++) {
+    AddValueElement (PageManager.CurrentPage.get(i));
+  }
+}
 
 
 
@@ -335,6 +379,7 @@ void RemoveValueElement (int Index, GUI_Element ElementToDelete) {
   
   // Finsih
   SetValuesFrameScroll();
+  PageManager.CalcTotal();
   
 }
 
@@ -359,6 +404,52 @@ void SetValuesFrameScroll() {
   int NumOfValues = GUI_PageEditor_AllValues.Children.size();
   GUI_PageEditor_AllValues.MaxScrollY = max (NumOfValues * 0.1 - 0.975, 0);
   GUI_PageEditor_AllValues.ConstrainScroll();
+}
+
+
+
+
+
+
+
+
+
+
+void ResetPageElements() {
+  GUI_PageSelector_AllPages.DeleteChildren();
+  for (int i = 0; i < PageManager.AllPageNames.size(); i ++) {
+    AddPageElement (PageManager.AllPageNames.get(i));
+  }
+}
+
+
+
+void AddPageElement (String PageName) {
+  
+  // Create element
+  GUI_Element NewPageElement = (GUI_Element) GUI_PageSelector_PagePreset.clone();
+  
+  // Set element data
+  int NewValueIndex = GUI_PageSelector_AllPages.Children.size();
+  NewPageElement.Text = PageName;
+  NewPageElement.Name = Integer.toString (NewValueIndex + 1);
+  NewPageElement.YPos = NewValueIndex * 0.11 + 0.02;
+  NewPageElement.Enabled = true;
+  
+  // Add element
+  GUI_PageSelector_AllPages.AddChild(NewPageElement);
+  
+  // Finish
+  SetPagesFrameScroll();
+  
+}
+
+
+
+void SetPagesFrameScroll() {
+  int NumOfValues = GUI_PageSelector_AllPages.Children.size();
+  GUI_PageSelector_AllPages.MaxScrollY = max (NumOfValues * 0.1 - 0.975, 0);
+  GUI_PageSelector_AllPages.ConstrainScroll();
 }
 
 

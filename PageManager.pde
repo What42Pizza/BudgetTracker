@@ -27,7 +27,7 @@ class PageManager_Class {
   
   void Init() {
     PagesFolder = new File (dataPath("") + "/Pages");
-    AllPageNames = ConvertStrings (PagesFolder.list());
+    AllPageNames = ConvertStrings (loadStrings (dataPath("") + "/AllPageNames.txt"));
     if (PagesFolder.exists()) {
       if (PagesFolder.isDirectory()) {
         if (PagesFolder.list().length != 0) {
@@ -44,7 +44,6 @@ class PageManager_Class {
       CreateBasicPage();
     }
     History.AddSavePoint();
-    ResetGUIElements();
   }
   
   
@@ -57,17 +56,10 @@ class PageManager_Class {
   
   
   void LoadLatestPage() {
-    String LatestPage = Settings.GetDataString ("latest page", null);
-    if (LatestPage != null) {
-      ArrayList <String> LoadedPage = GetPageDataFromFile (LatestPage);
-      if (LoadedPage != null) {
-        CurrentPage = LoadedPage;
-        CalcTotal();
-        ChangesSaved = true;
-      } else {
-        println ("Error: page " + '"' + LatestPage + '"' + " was not found.");
-        CreateBasicPage();
-      }
+    String LatestPageName = Settings.GetDataString ("latest page", null);
+    if (LatestPageName != null) {
+      LoadPage (LatestPageName);
+      if (CurrentPage == null) CreateBasicPage();
     } else {
       println ("Error: data.txt entry " + '"' + "latest page" + '"' + " was not found.");
       CreateBasicPage();
@@ -78,10 +70,26 @@ class PageManager_Class {
   
   
   
+  void LoadPage (String PageName) {
+    ArrayList <String> LoadedPage = GetPageDataFromFile (PageName);
+    if (LoadedPage != null) {
+      CurrentPage = LoadedPage;
+      CalcTotal();
+      ResetValueElements();
+      ChangesSaved = true;
+    } else {
+      println ("Error: page " + '"' + PageName + '"' + " was not found.");
+    }
+  }
+  
+  
+  
+  
+  
   ArrayList <String> GetPageDataFromFile (String PageName) {
     String PageFileName = GetPageFileName (PageName);
     for (String S : AllPageNames) {
-      if (S.equals(PageFileName)) {
+      if (S.equals(PageName)) {
         return ConvertStrings (loadStrings (dataPath("") + "/Pages/" + PageFileName));
       }
     }
@@ -92,14 +100,12 @@ class PageManager_Class {
   
   
   
-  void ResetGUIElements() {
-    GUI_PageEditor_AllValues.DeleteChildren();
-    for (int i = 1; i < CurrentPage.size(); i ++) {
-      AddValueElement (CurrentPage.get(i));
-    }
+  void Save() {
+    SaveCurrentPage();
+    SaveAllPageNames();
+    Settings.SetDataString ("latest page", PageManager.CurrentPage.get(0));
+    ChangesSaved = true;
   }
-  
-  
   
   
   
@@ -111,8 +117,15 @@ class PageManager_Class {
     }
     PageOutput.flush();
     PageOutput.close();
-    Settings.SetDataString ("latest page", PageManager.CurrentPage.get(0));
-    ChangesSaved = true;
+  }
+  
+  
+  
+  void SaveAllPageNames() {
+    PrintWriter PageNamesOutput = createWriter (dataPath("") + "/AllPageNames.txt");
+    for (String S : AllPageNames) PageNamesOutput.println (S);
+    PageNamesOutput.flush();
+    PageNamesOutput.close();
   }
   
   
@@ -150,6 +163,7 @@ class PageManager_Class {
     CurrentPage = CreateNewPage();
     AllPageNames.add(CurrentPage.get(0));
     CalcTotal();
+    ResetValueElements();
     ChangesSaved = true;
   }
   

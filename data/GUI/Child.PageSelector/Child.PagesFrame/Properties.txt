@@ -1,0 +1,14 @@
+Name:
+PagesFrame
+
+ElementType:
+Frame
+
+XPos:
+0.375
+YPos:
+0.2
+XSize:
+0.25
+YSize:
+0.75
