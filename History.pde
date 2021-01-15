@@ -11,8 +11,9 @@ class History_Class {
   //ArrayList <String> SavedUndoChainNames = new ArrayList <String> ();
   //ArrayList <ArrayList <ArrayList <String>>> AllSavedPages = new ArrayList <ArrayList <ArrayList <String>>> ();
   
-  ArrayList <ArrayList <String>> SavedPages = new ArrayList <ArrayList <String>> ();
+  ArrayList <ArrayList <String[]>> SavedPages = new ArrayList <ArrayList <String[]>> ();
   ArrayList <ArrayList <String>> SavedPageNames = new ArrayList <ArrayList <String>> ();
+  ArrayList <String> SavedNames = new ArrayList <String> ();
   int CurrentIndex = -1;
   
   int MaxUndoChain;
@@ -36,9 +37,11 @@ class History_Class {
     while (CurrentIndex < SavedPages.size() - 1) { // If changes were undone, remove all undone changes before adding to history
       SavedPages.remove (SavedPages.size() - 1);
       SavedPageNames.remove (SavedPages.size());
+      SavedNames.remove (PageManager.PageName);
     }
-    SavedPages.add ((ArrayList <String>) PageManager.CurrentPage.clone());
+    SavedPages.add ((ArrayList <String[]>) PageManager.CurrentPage.clone());
     SavedPageNames.add ((ArrayList <String>) PageManager.AllPageNames.clone());
+    SavedNames.add (PageManager.PageName);
     CurrentIndex ++;
   }
   
@@ -46,8 +49,9 @@ class History_Class {
   
   void Undo() {
     CurrentIndex --;
-    PageManager.CurrentPage = (ArrayList <String>) SavedPages.get (CurrentIndex).clone();
+    PageManager.CurrentPage = (ArrayList <String[]>) SavedPages.get (CurrentIndex).clone();
     PageManager.AllPageNames = (ArrayList <String>) SavedPageNames.get (CurrentIndex).clone();
+    PageManager.PageName = SavedNames.get (CurrentIndex);
     UpdateAll();
   }
   
@@ -55,8 +59,9 @@ class History_Class {
   
   void Redo() {
     CurrentIndex ++;
-    PageManager.CurrentPage = (ArrayList <String>) SavedPages.get (CurrentIndex).clone();
+    PageManager.CurrentPage = (ArrayList <String[]>) SavedPages.get (CurrentIndex).clone();
     PageManager.AllPageNames = (ArrayList <String>) SavedPageNames.get (CurrentIndex).clone();
+    PageManager.PageName = SavedNames.get (CurrentIndex);
     UpdateAll();
   }
   
@@ -64,15 +69,16 @@ class History_Class {
   
   void UpdateAll() {
     PageManager.ChangesSaved = false;
-    PageManager.CalcTotal();
+    PageManager.CalcTotals();
     ResetValueElements();
   }
   
   
   
   void Reset() {
-    SavedPages = new ArrayList <ArrayList <String>> ();
+    SavedPages = new ArrayList <ArrayList <String[]>> ();
     SavedPageNames = new ArrayList <ArrayList <String>> ();
+    SavedNames = new ArrayList <String> ();
     CurrentIndex = -1;
   }
   

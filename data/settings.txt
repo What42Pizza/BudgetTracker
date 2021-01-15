@@ -17,3 +17,9 @@ page name preset: [month]/--/[year]
 
 max undo chain: 100
 (default: 100)
+
+
+
+(these are tab seperated values)
+column names: Jan	Feb	Mar	Apr	May	June	July	Aug	Sep	Oct	Nov	Dec
+(default: Jan	Feb	Mar	Apr	May	June	July	Aug	Sep	Oct	Nov	Dec)

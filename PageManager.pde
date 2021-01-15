@@ -6,11 +6,17 @@ class PageManager_Class {
   
   
   
+  String[] ColumnNames;
+  
   ArrayList <String> AllPageNames = null;
-  ArrayList <Float> PageNumValues;
-  float PageNumTotal = 0;
-  ArrayList <String> CurrentPage;
+  ArrayList <String[]> CurrentPage;
+  String PageName;
   // The first string of a page is the name of that page
+  
+  ArrayList <Float[]> PageNumValues;
+  float[] PageColumnTotals;
+  ArrayList <Float> PageRowTotals;
+  float PageTotal = 0;
   
   boolean ChangesSaved = false;
   
@@ -26,6 +32,8 @@ class PageManager_Class {
   
   
   void Init() {
+    String DefaultColumnNames = "Jan" + char(9) + "Feb" + char (9) + "Mar" + char (9) + "Apr" + char (9) + "May" + char (9) + "June" + char (9) + "July" + char (9) + "Aug" + char (9) + "Sep" + char (9) + "Oct" + char (9) + "Nov" + char (9) + "Dec";
+    ColumnNames = split (Settings.GetString ("cloumn names", DefaultColumnNames), char(9));
     PagesFolder = new File (dataPath("") + "/Pages");
     AllPageNames = ConvertStrings (loadStrings (dataPath("") + "/AllPageNames.txt"));
     if (PagesFolder.exists()) {
@@ -59,7 +67,10 @@ class PageManager_Class {
     String LatestPageName = Settings.GetDataString ("latest page", null);
     if (LatestPageName != null) {
       LoadPage (LatestPageName);
-      if (CurrentPage == null) CreateBasicPage();
+      if (CurrentPage == null) {
+        println ("Error: could not find page " + LatestPageName);
+        CreateBasicPage();
+      }
     } else {
       println ("Error: data.txt entry " + '"' + "latest page" + '"' + " was not found.");
       CreateBasicPage();
@@ -71,31 +82,20 @@ class PageManager_Class {
   
   
   void LoadPage (String PageName) {
-    ArrayList <String> LoadedPage = GetPageDataFromFile (PageName);
-    if (LoadedPage != null) {
-      CurrentPage = LoadedPage;
-      CalcTotal();
-      ResetValueElements();
-      ChangesSaved = true;
-    } else {
-      println ("Error: page " + '"' + PageName + '"' + " was not found.");
-    }
+    
+    String FilePath = dataPath("") + "/Pages/" + GetPageFileName (PageName);
+    if (! new File(FilePath).exists()) return;
+    
+    String[] RawPage = loadStrings (FilePath);
+    this.PageName = RawPage[0];
+    
+    CurrentPage = DeserializeRawPage (RawPage);
+    CalcTotals();
+    ResetValueElements();
+    ChangesSaved = true;
     History.Reset();
     //History.SwitchToPage (CurrentPage.get(0));
-  }
-  
-  
-  
-  
-  
-  ArrayList <String> GetPageDataFromFile (String PageName) {
-    String PageFileName = GetPageFileName (PageName);
-    for (String S : AllPageNames) {
-      if (S.equals(PageName)) {
-        return ConvertStrings (loadStrings (dataPath("") + "/Pages/" + PageFileName));
-      }
-    }
-    return null;
+    
   }
   
   
@@ -106,16 +106,17 @@ class PageManager_Class {
     SaveCurrentPage();
     SaveAllPageNames();
     RemoveUnneededPages();
-    Settings.SetDataString ("latest page", PageManager.CurrentPage.get(0));
+    Settings.SetDataString ("latest page", PageName);
     ChangesSaved = true;
   }
   
   
   
   void SaveCurrentPage() {
-    String PageFileName = GetPageFileName (CurrentPage.get(0));
+    String PageFileName = GetPageFileName (PageName);
     PrintWriter PageOutput = createWriter (dataPath("") + "/Pages/" + PageFileName);
-    for (String S : CurrentPage) {
+    String[] SerializedPage = SerializeCurrentPage();
+    for (String S : SerializedPage) {
       PageOutput.println(S);
     }
     PageOutput.flush();
@@ -158,10 +159,72 @@ class PageManager_Class {
   
   
   
+  
+  
+  
+  
+  
+  String[] SerializeCurrentPage() {
+    int NumOfColumns = ColumnNames.length + 1;
+    int NumOfRows = CurrentPage.size();
+    String[] Output = new String [NumOfRows * NumOfColumns + 1];
+    
+    Output[0] = PageName;
+    int OutputIndex = 1;
+    for (int i = 0; i < NumOfRows; i ++) {
+      String[] CurrRow = CurrentPage.get(i);
+      for (int j = 0; j < NumOfColumns; j ++) {
+        Output[OutputIndex] = CurrRow[j];
+        OutputIndex ++;
+      }
+    }
+    
+    return Output;
+  }
+  
+  
+  
+  
+  
+  ArrayList <String[]> DeserializeRawPage (String[] In) {
+    int NumOfRawRows = In.length - 1;
+    int NumOfColumns = ColumnNames.length + 1;
+    
+    // Error checking
+    if (NumOfRawRows % NumOfColumns != 0) {
+      println ("Error: page length cannot be " + In.length + ".");
+      exit(); return null;
+    }
+    
+    // Deserialize
+    ArrayList <String[]> Output = new ArrayList <String[]> ();
+    int NumOfRows = NumOfRawRows / NumOfColumns;
+    
+    for (int i = 0; i < NumOfRows; i ++) {
+      String[] NewLine = new String [NumOfColumns];
+      for (int j = 0; j < NumOfColumns; j ++) {
+        NewLine[j] = In [j + i + 1];
+      }
+      Output.add (NewLine);
+    }
+    
+    return Output;
+    
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   void SetPageName (String NewPageName) {
     
     // Replace name in AllPageNames
-    String CurrPageName = CurrentPage.get(0);
+    String CurrPageName = PageName;
     for (int i = 0; i < AllPageNames.size(); i ++) {
       if (AllPageNames.get(i).equals(CurrPageName)) {
         AllPageNames.remove(i);
@@ -172,7 +235,7 @@ class PageManager_Class {
     
     // Update CurrentPage
     CurrentPage.remove (0);
-    CurrentPage.add (0, NewPageName);
+    PageName = NewPageName;
     
   }
   
@@ -187,26 +250,26 @@ class PageManager_Class {
   
   void CreateBasicPage() {
     CurrentPage = CreateNewPage();
-    AllPageNames.add(CurrentPage.get(0));
+    AllPageNames.add(PageName);
     //History.SwitchToPage (CurrentPage.get(0));
-    CalcTotal();
+    CalcTotals();
     ResetValueElements();
     ChangesSaved = true;
   }
   
   
   
-  ArrayList <String> CreateNewPage() {
-    ArrayList <String> Output = new ArrayList <String> ();
+  ArrayList <String[]> CreateNewPage() {
+    ArrayList <String[]> Output = new ArrayList <String[]> ();
     String PageNamePreset = Settings.GetString("page name preset", "[month]/--/[year]");
     String PageNameWONum = FillNamePreset (PageNamePreset);
-    String PageName = PageNameWONum;
+    String NewPageName = PageNameWONum;
     int PageNum = 0;
-    while (PageAlreadyExists (PageName)) {
+    while (PageAlreadyExists (NewPageName)) {
       PageNum ++;
-      PageName = PageNameWONum + " (" + PageNum + ")";
+      NewPageName = PageNameWONum + " (" + PageNum + ")";
     }
-    Output.add(PageName);
+    PageName = NewPageName;
     return Output;
   }
   
@@ -221,19 +284,34 @@ class PageManager_Class {
   
   
   
-  void CalcTotal() {
-    PageNumValues = new ArrayList <Float> ();
-    PageNumTotal = 0;
-    for (int i = 1; i < CurrentPage.size(); i ++) {
-      try {
-        Float CastedFloat = Float.parseFloat(CurrentPage.get(i));
-        PageNumValues.add(CastedFloat);
-        PageNumTotal += CastedFloat;
-      } catch (NumberFormatException e) {
-        PageNumValues.add(null);
+  void CalcTotals() {
+    
+    int NumOfColumns = ColumnNames.length + 1;
+    PageNumValues = new ArrayList <Float[]> ();
+    PageRowTotals = new ArrayList <Float> ();
+    PageColumnTotals = new float [NumOfColumns];
+    PageTotal = 0;
+    
+    for (int i = 0; i < NumOfColumns; i ++) PageRowTotals.add(0.0);
+    
+    for (int i = 0; i < CurrentPage.size(); i ++) {
+      Float[] RowValues = new Float [NumOfColumns];
+      for (int j = 0; j < NumOfColumns; j ++) { // i = row, j = column
+        try {
+          
+          float CastedFloat = Float.parseFloat (CurrentPage.get(i)[j]);
+          RowValues[j] = CastedFloat;
+          PageRowTotals.add (j, PageRowTotals.remove (j) + CastedFloat);
+          PageColumnTotals[i] += CastedFloat;
+          PageTotal += CastedFloat;
+          
+        } catch (NumberFormatException e) {
+          RowValues[j] = null;
+        }
       }
+      PageNumValues.add (RowValues);
     }
-    GUI_PageEditor_Total.Text = Float.toString (PageNumTotal);
+    
   }
   
   

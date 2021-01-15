@@ -3,6 +3,7 @@ GUI_Element GUI_Main;
 GUI_Element GUI_ExitButton;
 
 GUI_Element GUI_PageSelector;
+
 GUI_Element GUI_PageSelector_BackButton;
 GUI_Element GUI_PageSelector_CreatePageButton;
 GUI_Element GUI_PageSelector_PagePreset;
@@ -16,14 +17,8 @@ GUI_Element GUI_PageEditor_UndoButton;
 GUI_Element GUI_PageEditor_RedoButton;
 GUI_Element GUI_PageEditor_NewPageButton;
 GUI_Element GUI_PageEditor_SelectPageButton;
-GUI_Element GUI_PageEditor_Total;
 int SaveButton_FramesUntilReset = -1;
 String PrevPageName = null;
-
-GUI_Element GUI_PageEditor_AddValueButton;
-GUI_Element GUI_PageEditor_RemoveValueButton;
-GUI_Element GUI_PageEditor_ValuePreset;
-GUI_Element GUI_PageEditor_AllValues;
 
 GUI_Element GUI_ConfirmExitWindow;
 GUI_Element GUI_ConfirmExitWindow_ExitButton;
@@ -70,13 +65,6 @@ void InitGUI() {
   GUI_PageEditor_RedoButton = GUI_PageEditor.Child("RedoButton");
   GUI_PageEditor_NewPageButton = GUI_PageEditor.Child("NewPageButton");
   GUI_PageEditor_SelectPageButton = GUI_PageEditor.Child("SelectPageButton");
-  GUI_PageEditor_Total = GUI_PageEditor.Child("TotalText");
-  
-  GUI_Element ValuesFrame = GUI_PageEditor.Child("ValuesFrame");
-  GUI_PageEditor_AllValues = ValuesFrame.Child("AllValues");
-  GUI_PageEditor_AddValueButton = ValuesFrame.Child("AddValueButton");
-  GUI_PageEditor_RemoveValueButton = ValuesFrame.Child("RemoveValueButton");
-  GUI_PageEditor_ValuePreset = ValuesFrame.Child("ValuePreset");
   
   GUI_Element Windows = GUI_Main.Child("Windows");
   
@@ -182,37 +170,6 @@ void InitGUI() {
     PageManager.Save();
     GUI_PageEditor_SaveButton.Text = "Saved!";
     SaveButton_FramesUntilReset = (int) frameRate; // Wait ~1 second
-  }};
-  
-  
-  // PageEditor.AddValueButton
-  GUI_PageEditor_AddValueButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
-    String NewValue = GUI_PageEditor_ValuePreset.Child("TextBox").Text;
-    AddValueElement (NewValue);
-    PageManager.CurrentPage.add (NewValue);
-    History.AddSavePoint();
-    PageManager.ChangesSaved = false;
-  }};
-  
-  
-  // PageEditor.RemoveValueButton
-  GUI_PageEditor_RemoveValueButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
-    if (PageManager.CurrentPage.size() > 1) RemoveLastValue();
-  }};
-  
-  
-  // PageEditor.ValuePreset.TextBox
-  GUI_PageEditor_ValuePreset.Child("TextBox").OnTextFinished = new Action() {@Override public void Run (GUI_Element This) {
-    int Index = int (This.Parent.Name);
-    String OldValue = PageManager.CurrentPage.get (Index);
-    String NewValue = This.Text;
-    if (!OldValue.equals(NewValue)) { // Only update if text has changed
-      PageManager.CurrentPage.remove (Index);
-      PageManager.CurrentPage.add (Index, NewValue);
-      PageManager.CalcTotal();
-      PageManager.ChangesSaved = false;
-      History.AddSavePoint();
-    }
   }};
   
   
@@ -330,22 +287,8 @@ void UpdatePageEditorElements() {
     PageManager.ChangesSaved = false;
   }
   if (!PageName.TextIsBeingEdited) {
-    PageName.Text = PageManager.CurrentPage.get(0);
+    PageName.Text = PageManager.PageName;
     PageName.PlaceholderText = PageName.Text;
-  }
-  
-  
-  // Value.RemoveButtons
-  for (int i = 0; i < GUI_PageEditor_AllValues.Children.size(); i ++) {
-    GUI_Element E = GUI_PageEditor_AllValues.Children.get(i);
-    if (E.Child("RemoveButton").JustClicked()) {
-      PageManager.CurrentPage.remove (i + 1);
-      //PageManager.CalcTotal(); // Not needed because RemoveValueElement calls this
-      RemoveValueElement (i, E);
-      History.AddSavePoint();
-      PageManager.ChangesSaved = false;
-      i --;
-    }
   }
   
   
@@ -361,75 +304,7 @@ void UpdatePageEditorElements() {
 
 
 void ResetValueElements() {
-  GUI_PageEditor_AllValues.DeleteChildren();
-  for (int i = 1; i < PageManager.CurrentPage.size(); i ++) {
-    AddValueElement (PageManager.CurrentPage.get(i));
-  }
-}
-
-
-
-void AddValueElement (String Value) {
-  
-  // Create element
-  GUI_Element NewValueElement = (GUI_Element) GUI_PageEditor_ValuePreset.clone();
-  
-  // Set data
-  int NewValueIndex = GUI_PageEditor_AllValues.Children.size();
-  NewValueElement.Child("TextBox").Text = Value;
-  NewValueElement.Name = Integer.toString (NewValueIndex + 1);
-  NewValueElement.YPos = NewValueIndex * 0.1;
-  NewValueElement.Enabled = true;
-  
-  // Add element
-  GUI_PageEditor_AllValues.AddChild(NewValueElement);
-  
-  // Finish
-  SetValuesFrameScroll();
-  
-}
-
-
-
-void RemoveValueElement (int Index, GUI_Element ElementToDelete) {
-  
-  // Remove element
-  ElementToDelete.Delete();
-  
-  // Move continuing elements
-  for (int i = Index + 2; i < PageManager.CurrentPage.size() + 1; i ++) {
-    GUI_Element ElementToMove = GUI_PageEditor_AllValues.Child(Integer.toString (i));
-    ElementToMove.YPos = (i - 2) * 0.1;
-    ElementToMove.Name = Integer.toString (i - 1);
-  }
-  
-  // Finsih
-  SetValuesFrameScroll();
-  PageManager.CalcTotal();
-  
-}
-
-
-
-void RemoveLastValue() {
-  
-  // Remove value & element
-  int Index = PageManager.CurrentPage.size() - 1;
-  PageManager.CurrentPage.remove (Index);
-  RemoveValueElement (Index, GUI_PageEditor_AllValues.Child (Integer.toString (Index)));
-  
-  // Finish
-  History.AddSavePoint();
-  PageManager.ChangesSaved = false;
-  
-}
-
-
-
-void SetValuesFrameScroll() {
-  int NumOfValues = GUI_PageEditor_AllValues.Children.size();
-  GUI_PageEditor_AllValues.MaxScrollY = max (NumOfValues * 0.1 - 0.975, 0);
-  GUI_PageEditor_AllValues.ConstrainScroll();
+  println ("WIP: ResetValueElements");
 }
 
 

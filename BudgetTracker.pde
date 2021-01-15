@@ -1,7 +1,7 @@
 // Started 01/06/20
-// Last updated 01/14/20
+// Last updated 01/15/20
 
-// A 1.1.0
+// B 1.0.0
 
 
 
@@ -10,6 +10,9 @@
 /*
 
 Change log:
+
+B 1.0.0: 01/15/20
+Deleted old page editor
 
 A 1.1.0: 01/14/21
 Finished page selector (mostly)
