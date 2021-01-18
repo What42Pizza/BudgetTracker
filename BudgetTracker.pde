@@ -1,7 +1,7 @@
 // Started 01/06/20
-// Last updated 01/16/20
+// Last updated 01/18/20
 
-// B 1.1.0
+// B 1.2.0
 
 
 
@@ -11,10 +11,13 @@
 
 Change log:
 
-B 1.1.0: 01/16/20
+B 1.2.0: 01/18/21
+More work on page editor
+
+B 1.1.0: 01/16/21
 Started work on new page editor
 
-B 1.0.0: 01/15/20
+B 1.0.0: 01/15/21
 Deleted old page editor
 Updated page manager to use new page system
 

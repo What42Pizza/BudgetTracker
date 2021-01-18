@@ -21,7 +21,9 @@ int SaveButton_FramesUntilReset = -1;
 String PrevPageName = null;
 
 GUI_Element GUI_PageEditor_ValuesGrid;
+GUI_Element GUI_PageEditor_ColumnNames;
 GUI_Element GUI_PageEditor_ColumnTotals;
+GUI_Element GUI_PageEditor_RowNames;
 GUI_Element GUI_PageEditor_RowTotals;
 GUI_Element GUI_PageEditor_PageTotal;
 
@@ -87,9 +89,20 @@ void LoadGUI() {
   
   GUI_Element ValuesFrame = GUI_PageEditor.Child("ValuesFrame");
   GUI_PageEditor_ValuesGrid = ValuesFrame.Child("ValuesGrid");
+  GUI_PageEditor_ColumnNames = ValuesFrame.Child("ColumnNames");
   GUI_PageEditor_ColumnTotals = ValuesFrame.Child("ColumnTotals");
+  GUI_PageEditor_RowNames = ValuesFrame.Child("RowNames");
   GUI_PageEditor_RowTotals = ValuesFrame.Child("RowTotals");
   GUI_PageEditor_PageTotal = ValuesFrame.Child("BottomRightPageTotal");
+  
+  GUI_PageEditor_ColumnNames.ScrollIsSyncedWith = new GUI_Element[] {
+    GUI_PageEditor_ColumnTotals,
+    GUI_PageEditor_ValuesGrid,
+  };
+  GUI_PageEditor_ColumnTotals.ScrollIsSyncedWith = new GUI_Element[] {
+    GUI_PageEditor_ColumnNames,
+    GUI_PageEditor_ValuesGrid,
+  };
   
   
   // Windows
@@ -141,7 +154,7 @@ void SetGUIActions() {
   }};
   
   
-  // SaveBeforeNewPageWindow_CreatePagWSavingButton
+  // SaveBeforeNewPageWindow_CreatePageWSavingButton
   GUI_SBNPW_CreatePageWSavingButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     PageManager.Save();
     GUI_SBNPW_CreatePageWOSavingButton.OnButtonPressed.Run (null);
@@ -152,6 +165,7 @@ void SetGUIActions() {
   GUI_SBNPW_CreatePageWOSavingButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     PageManager.CreateBasicPage();
     ResetValueElements();
+    //History.Reset(); // This stops you from undo-ing a new page, but I think we should keep that
     History.AddSavePoint();
     PageManager.ChangesSaved = false;
     GUI_SaveBeforeNewPageWindow.Enabled = false;
@@ -342,33 +356,107 @@ void UpdatePageEditorElements() {
 
 
 
+/*
+float PrevScrollX = 0;
+float PrevScrollY = 0;
+
+float PrevCurrScrollX = 0;
+float PrevCurrScrollY = 0;
+
+void SyncValuesScrolls() {
+  
+   // Get total change for each element
+  float ColumnNamesScrollXDelta = GUI_PageEditor_ColumnNames.TargetScrollX - PrevScrollX;
+  float ColumnTotalsScrollXDelta = GUI_PageEditor_ColumnTotals.TargetScrollX - PrevScrollX;
+  float ValuesGridScrollXDelta = GUI_PageEditor_ValuesGrid.TargetScrollX - PrevScrollX;
+  float TotalXDelta = ColumnNamesScrollXDelta + ColumnTotalsScrollXDelta + ValuesGridScrollXDelta;
+  float NewScrollX = PrevScrollX + TotalXDelta;
+  
+  // Update Scrolling if needed
+  if (NewScrollX != PrevScrollX) {
+    
+    GUI_PageEditor_ColumnNames.TargetScrollX = NewScrollX;
+    GUI_PageEditor_ColumnTotals.TargetScrollX = NewScrollX;
+    GUI_PageEditor_ValuesGrid.TargetScrollX = NewScrollX;
+    
+    GUI_PageEditor_ColumnNames.CurrScrollX = PrevCurrScrollX;
+    GUI_PageEditor_ColumnTotals.CurrScrollX = PrevCurrScrollX;
+    GUI_PageEditor_ValuesGrid.CurrScrollX = PrevCurrScrollX;
+    
+    PrevScrollX = NewScrollX;
+    
+  }
+  
+  PrevCurrScrollX = GUI_PageEditor_ColumnNames.CurrScrollX;
+  
+  //PrevScrollY = NewScrollY;
+  
+}
+*/
+
+
+
+
+
+
+
+
+
+
 void InitValueElements() {
   
   GUI_Element SizeExample = GUI_PageEditor_PageTotal;
   float ValueXSize = SizeExample.XSize / (1 - SizeExample.XSize * 2); // Find what percent the value size is of the ValuesGrid size
   float ValueYSize = SizeExample.YSize / (1 - SizeExample.YSize * 2);
   
-  InitColumnElements (ValueXSize);
+  InitColumnNames  (ValueXSize);
+  InitColumnTotals (ValueXSize);
   
 }
 
 
 
-void InitColumnElements (float ValueXSize) {
+void InitColumnNames (float ValueXSize) {
   String[] ColumnNames = PageManager.ColumnNames;
-  GUI_Element ColumnsFrame = GUI_PageEditor_ValuesGrid.Sibling("ColumnNames");
-  ColumnsFrame.MaxScrollX = ColumnNames.length * ValueXSize - 1;
+  GUI_Element ColumnNamesFrame = GUI_PageEditor_ValuesGrid.Sibling("ColumnNames");
+  ColumnNamesFrame.MaxScrollX = ColumnNames.length * ValueXSize - 1;
   
-  GUI_Element ColumnLabelPreset = new GUI_Element ("TextFrame", "CLP");
-  ColumnLabelPreset.YPos = 0;
-  ColumnLabelPreset.XSize = ValueXSize;
-  ColumnLabelPreset.YSize = 1;
+  GUI_Element ColumnNamePreset = new GUI_Element ("TextFrame", "CNP");
+  ColumnNamePreset.YPos = 0;
+  ColumnNamePreset.XSize = ValueXSize;
+  ColumnNamePreset.YSize = 1;
+  ColumnNamePreset.YPixelOffset = 1;
+  ColumnNamePreset.YSizePixelOffset = -2;
   
   for (int i = 0; i < ColumnNames.length; i ++) {
-    GUI_Element NewColumnLabel = (GUI_Element) ColumnLabelPreset.clone();
-    NewColumnLabel.XPos = ValueXSize * i;
-    NewColumnLabel.Text = ColumnNames[i];
-    ColumnsFrame.AddChild(NewColumnLabel);
+    GUI_Element NewColumnName = (GUI_Element) ColumnNamePreset.clone();
+    NewColumnName.Name = ColumnNames[i];
+    NewColumnName.Text = ColumnNames[i];
+    NewColumnName.XPos = ValueXSize * i;
+    ColumnNamesFrame.AddChild(NewColumnName);
+  }
+  
+}
+
+
+
+void InitColumnTotals (float ValueXSize) {
+  String[] ColumnNames = PageManager.ColumnNames;
+  GUI_Element ColumnTotalsFrame = GUI_PageEditor_ValuesGrid.Sibling("ColumnTotals");
+  ColumnTotalsFrame.MaxScrollX = ColumnNames.length * ValueXSize - 1;
+  
+  GUI_Element ColumnTotalPreset = new GUI_Element ("TextFrame", "CTP");
+  ColumnTotalPreset.YPos = 0;
+  ColumnTotalPreset.XSize = ValueXSize;
+  ColumnTotalPreset.YSize = 1;
+  ColumnTotalPreset.YPixelOffset = 1;
+  ColumnTotalPreset.YSizePixelOffset = -2;
+  
+  for (int i = 0; i < ColumnNames.length; i ++) {
+    GUI_Element NewColumnTotal = (GUI_Element) ColumnTotalPreset.clone();
+    NewColumnTotal.Name = Integer.toString(i);
+    NewColumnTotal.XPos = ValueXSize * i;
+    ColumnTotalsFrame.AddChild(NewColumnTotal);
   }
   
 }

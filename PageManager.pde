@@ -13,7 +13,7 @@ class PageManager_Class {
   File PagesFolder;
   
   // Page
-  ArrayList <String> AllPageNames = null;
+  ArrayList <String> AllPageNames;
   ArrayList <String[]> CurrentPage;
   String PageName;
   
@@ -269,7 +269,7 @@ class PageManager_Class {
   
   ArrayList <String[]> CreateNewPage() {
     ArrayList <String[]> Output = new ArrayList <String[]> ();
-    String PageNamePreset = Settings.GetString("page name preset", "[month]/--/[year]");
+    String PageNamePreset = Settings.GetString("page name preset", "[year]");
     String PageNameWONum = FillNamePreset (PageNamePreset);
     String NewPageName = PageNameWONum;
     int PageNum = 0;

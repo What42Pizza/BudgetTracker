@@ -5,13 +5,13 @@ ElementType:
 ScrollingFrame
 
 XPos:
-0.875
-YPos:
-0.1
-XSize:
 0.125
+YPos:
+0.9
+XSize:
+0.75
 YSize:
-0.8
+0.1
 
 EdgeSize:
 3
@@ -21,3 +21,8 @@ BackgroundColor:
 
 RenderChildrenNotInFrame:
 false
+
+ScrollSpeedX:
+1
+ScrollSpeedY:
+0

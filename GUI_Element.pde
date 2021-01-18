@@ -76,11 +76,14 @@ public class GUI_Element implements Cloneable {
   public float   TargetScrollY = 0;
   public float   CurrScrollX = 0;
   public float   CurrScrollY = 0;
+  public float   PrevScrollX = 0;
+  public float   PrevScrollY = 0;
   public float   MinScrollX = 0;
   public float   MinScrollY = 0;
   public float   MaxScrollX = 1000;
   public float   MaxScrollY = 1000;
   public float   ReachTargetSpeed = 0.4;
+  public GUI_Element[] ScrollIsSyncedWith;
   
   public ArrayList <GUI_Element> Children = new ArrayList <GUI_Element> ();
   public GUI_Element Parent = null;
@@ -161,9 +164,35 @@ public class GUI_Element implements Cloneable {
     File[] FolderDir = ElementFolder.listFiles();
     
     for (File F : FolderDir) {
-      String FName = F.getName();
-      if (FName.startsWith("Child.") && F.isDirectory()) { // Yes, String has .startsWith()
-        AddChild (new GUI_Element (F));
+      String FileName = F.getName();
+      if (FileName.startsWith("Child.") && F.isDirectory()) { // Yes, String has .startsWith()
+        AddChild (new GUI_Element (F, this));
+      }
+    }
+    
+    GUIFunctions.AllGUIElements.add(this);
+    
+  }
+  
+  public GUI_Element (File ElementFolder, GUI_Element Parent) {
+    
+    if (ElementFolder == null       ) {println ("Error while constructing GUI_Element: The given File cannot be null"); return;}
+    if (!ElementFolder.exists()     ) {println ("Error while constructing GUI_Element: The given File (" + ElementFolder.getAbsolutePath() + ") must exist"); return;}
+    if (!ElementFolder.isDirectory()) {println ("Error while constructing GUI_Element: The given File (" + ElementFolder.getAbsolutePath() + ") must be a folder"); return;}
+    
+    File PropertiesFile = GUIFunctions.GetChildFile (ElementFolder, "Properties.txt");
+    if (PropertiesFile == null) {println ("Error while constructing GUI_Element: No Properties.txt file found in " + ElementFolder.getAbsolutePath()); return;}
+    
+    String[] Properties = loadStrings (PropertiesFile);
+    GUIFunctions.SetGUIElementProperties (this, Properties);
+    FullName = Parent.FullName + '.' + Name;
+    
+    File[] FolderDir = ElementFolder.listFiles();
+    
+    for (File F : FolderDir) {
+      String FileName = F.getName();
+      if (FileName.startsWith("Child.") && F.isDirectory()) { // Yes, String has .startsWith()
+        AddChild (new GUI_Element (F, this));
       }
     }
     
@@ -280,40 +309,167 @@ public class GUI_Element implements Cloneable {
   
   
   
-  public void Render() {
-    if (!Enabled) return;
-    //try {
+  public void Render() { // Call RenderThis() and UpdateThis() on this and children
+    if (Enabled) {
+      UpdateThis();
+      UpdateChildren();
+      if (Visible) RenderThis();
+      RenderChildren();
+      //RenderAndUpdateChildren();
+    }
+  }
+  
+  
+  
+  public void RenderWOUpdate() { // Call RenderThis() on this and children
+    if (Enabled) {
+      if (Visible) RenderThis();
+      RenderChildren(); // Calls RenderWOUpdate(), not Render()
+    }
+  }
+  
+  
+  
+  public void Update() { // Call UpdateThis() on this and children
+    if (Enabled) {
+      UpdateThis();
+      UpdateChildren();
+    }
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  public void CalcScreenData() {
     
-    PrevTextIsBeingEdited = TextIsBeingEdited;
+    ScreenXPos = GUIFunctions.GetScreenX(XPos) + XPixelOffset;
+    ScreenYPos = GUIFunctions.GetScreenY(YPos) + YPixelOffset;
     
+    switch (SizeIsConsistentWith) {
+      
+      case ("POSITION"):
+        int ScreenXEnd, ScreenYEnd;
+        ScreenXEnd  = GUIFunctions.GetScreenX (XPos + XSize);
+        ScreenXSize = ScreenXEnd - ScreenXPos + XSizePixelOffset + XPixelOffset;
+        ScreenYEnd  = GUIFunctions.GetScreenY (YPos + YSize);
+        ScreenYSize = ScreenYEnd - ScreenYPos + YSizePixelOffset + YPixelOffset;
+        break;
+      
+      case ("ITSELF"):
+        ScreenXSize = (int) (XSize * CustMatrix_ScaleX * width ) + XSizePixelOffset;
+        ScreenYSize = (int) (YSize * CustMatrix_ScaleY * height) + YSizePixelOffset;
+        break;
+      
+      default:
+        println ("Error in " + this + ": SizeIsConsitantWith has to be either " + '"' + "POSITION" + '"' + " or " + '"' + "ITSELF" + '"' + ".");
+        break;
+      
+    }
+    
+    ScreenPressedXPos = ScreenXPos + PressedXMove;
+    ScreenPressedYPos = ScreenYPos + PressedYMove;
+    
+    /*
+    To understand the extra math behind ITSELF, for ScreenX(/Y)Size you can look at GUIFunctions.GetScreenX as f(x), which equals (x * C + D) * E, where C = ScaleX, D = TranslateX, and E = width
+    This means f(a + b) = aCE + bCE + DE, but f(a) + f(b) = aCE + bCE + 2DE
+    If you consider PScrollX + XPos as a, and XSize as b, then what POSITION is calculating is f(a) - f(a + b), which equals aCE + bCE + DE - aCE - DE
+    aCE and DE cancle out, leaving just bCE
+    To calculate this easier (and more consistant), we skip all the extra steps and just calculate bCE.
+    */
+    
+  }
+  
+  
+  
+  
+  
+  public void RenderChildren() {
+    
+    PushMatrix();
+    Translate (XPos + CurrScrollX * XSize, YPos + CurrScrollY * YSize);
+    Scale (1 / XSize, 1 / YSize);
+    
+    if (RenderChildrenNotInFrame) {
+      
+      for (GUI_Element E : Children) {
+        E.RenderWOUpdate();
+      }
+      
+    } else {
+      
+      for (GUI_Element E : Children) {
+        if (E.IsInFrame()) E.RenderWOUpdate();
+      }
+      
+    }
+    
+    PopMatrix();
+  }
+  
+  
+  
+  
+  
+  public void UpdateChildren() {
+    
+    PushMatrix();
+    Translate (XPos + CurrScrollX * XSize, YPos + CurrScrollY * YSize);
+    Scale (1 / XSize, 1 / YSize);
+    
+    if (UpdateChildrenNotInFrame) {
+      
+      for (GUI_Element E : Children) {
+        E.Update();
+      }
+      
+    } else {
+      
+      for (GUI_Element E : Children) {
+        if (E.IsInFrame()) E.Update();
+      }
+      
+    }
+    
+    PopMatrix();
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  public void RenderThis() {
     if (Deleted) {
       println ("ERROR: " + this + " HAS BEEN DELETED. REMOVE ALL POINTERS TO THIS OBJECT.");
       return;
     }
     
-    Update();
-    if (Deleted) return; // CustomAction might delete its own caller
-    
     CalcScreenData();
-    
-    if (Visible && Enabled) {
-      RenderFrame();
-      RenderImage();
-      RenderText();
-    }
-    
-    if (Enabled)
-      RenderChildren();
+    RenderFrame();
+    RenderImage();
+    RenderText();
     
     PrevMousePressed = mousePressed;
     PrevPressed = Pressed;
+    PrevScrollX = CurrScrollX;
+    PrevScrollY = CurrScrollY;
+    PrevTextIsBeingEdited = TextIsBeingEdited;
     
-    //} catch (Exception e) {println (this);}
   }
   
   
   
-  public void Update() {
+  
+  
+  public void UpdateThis() {
     
     if (this.JustClicked()) {
       if (!ButtonAction.equals("None")) GUIFunctions.ExecuteAction (ButtonAction, this);
@@ -325,17 +481,11 @@ public class GUI_Element implements Cloneable {
       GUIFunctions.GetScrollAmount();
     }
     
-    if (Draggable)
-      UpdateDragging();
+    if (Draggable) UpdateDragging();
+    if (CanBePressed) UpdatePressed();
+    if (TextIsEditable) UpdateTextEditing();
     
-    if (CanBePressed)
-      UpdatePressed();
-    
-    if (TextIsEditable)
-      UpdateTextEditing();
-    
-    if (OnTextFinished != null && UserStoppedEditingText())
-      OnTextFinished.Run (this);
+    if (OnTextFinished != null && UserStoppedEditingText()) OnTextFinished.Run (this);
     
     UpdateScrolling();
     
@@ -343,6 +493,13 @@ public class GUI_Element implements Cloneable {
   
   
   
+  
+  
+  
+  
+  
+  
+    
   public void UpdateDragging() {
     
     if (IsDragging) {
@@ -357,7 +514,7 @@ public class GUI_Element implements Cloneable {
       
     }
     
-    if (this.JustClicked()) { // I know the 'this.' is needed but it makes the name more understandable
+    if (this.JustClicked()) { // I know the 'this.' isn't needed but it makes the name more understandable
       IsDragging = true;
       Dragging_StartMouseX = mouseX;
       Dragging_StartMouseY = mouseY;
@@ -371,16 +528,9 @@ public class GUI_Element implements Cloneable {
   
   public void UpdatePressed() {
     if (Pressed) {
-      if (!(ButtonKey != -1 && GUIFunctions.KeyIsPressed (ButtonKey))) { // Don't unpress if ButtonKey is pressed
-        
-        if (!mousePressed) Pressed = false; // Stop being pressed if mouse is released
-        if (!this.HasMouseHovering()) Pressed = false; // Stop being pressed if mouse is no longer hovering
-        
-      }
+      Pressed = mousePressed || this.HasMouseHovering() || (ButtonKey != -1 && GUIFunctions.KeyIsPressed (ButtonKey)); // Stay pressed unitl none are true
     } else {
-      
-      if (this.JustClicked()) Pressed = true; // Start being pressed if just not clicked
-      
+      Pressed = this.JustClicked(); // Start being pressed if just not clicked
     }
   }
   
@@ -404,13 +554,8 @@ public class GUI_Element implements Cloneable {
     
     if (TextIsBeingEdited) {
       for (Character C : GUIFunctions.GetNewKeyPresses()) {
-        
-        if (C > 31 && C < 127)
-          Text += C;
-        
-        if (C == 8 && Text.length() > 0)
-          Text = Text.substring (0, Text.length() - 1);
-        
+        if (C > 31 && C < 127) Text += C;
+        if (C == 8 && Text.length() > 0) Text = Text.substring (0, Text.length() - 1);
       }
     }
     
@@ -434,14 +579,27 @@ public class GUI_Element implements Cloneable {
         TargetScrollX += ScrollAmountX; // Add scrolling
         TargetScrollY += ScrollAmountY;
         
+        if (ScrollIsSyncedWith != null) for (GUI_Element E : ScrollIsSyncedWith) {
+          E.TargetScrollX += ScrollAmountX;
+          E.TargetScrollY += ScrollAmountY;
+          E.ConstrainScroll();
+          E.SetCurrScroll();
+        }
+        
         ConstrainScroll();
         
       }
     }
     
-    CurrScrollX += (TargetScrollX - CurrScrollX) * ReachTargetSpeed;
-    CurrScrollY += (TargetScrollY - CurrScrollY) * ReachTargetSpeed;
+    SetCurrScroll();
     
+  }
+  
+  
+  
+  public void SetCurrScroll() {
+    CurrScrollX = PrevScrollX + (TargetScrollX - PrevScrollX) * ReachTargetSpeed;
+    CurrScrollY = PrevScrollY + (TargetScrollY - PrevScrollY) * ReachTargetSpeed;
   }
   
   
@@ -455,6 +613,11 @@ public class GUI_Element implements Cloneable {
       TargetScrollY = constrain(TargetScrollY, MaxScrollY * -1, MinScrollY);
     }
   }
+  
+  
+  
+  
+  
   
   
   
@@ -515,102 +678,6 @@ public class GUI_Element implements Cloneable {
       text (TextToDisplay, TextScreenX, TextScreenY);
     }
     
-  }
-  
-  
-  
-  public void CalcScreenData() {
-    
-    ScreenXPos = GUIFunctions.GetScreenX(XPos) + XPixelOffset;
-    ScreenYPos = GUIFunctions.GetScreenY(YPos) + YPixelOffset;
-    
-    switch (SizeIsConsistentWith) {
-      
-      case ("POSITION"):
-        int ScreenXEnd, ScreenYEnd;
-        ScreenXEnd  = GUIFunctions.GetScreenX (XPos + XSize);
-        ScreenXSize = ScreenXEnd - ScreenXPos + XSizePixelOffset + XPixelOffset;
-        ScreenYEnd  = GUIFunctions.GetScreenY (YPos + YSize);
-        ScreenYSize = ScreenYEnd - ScreenYPos + YSizePixelOffset + YPixelOffset;
-        break;
-      
-      case ("ITSELF"):
-        ScreenXSize = (int) (XSize * CustMatrix_ScaleX * width ) + XSizePixelOffset;
-        ScreenYSize = (int) (YSize * CustMatrix_ScaleY * height) + YSizePixelOffset;
-        break;
-      
-      default:
-        println ("Error in " + this + ": SizeIsConsitantWith has to be either " + '"' + "POSITION" + '"' + " or " + '"' + "ITSELF" + '"' + ".");
-        break;
-      
-    }
-    
-    ScreenPressedXPos = ScreenXPos + PressedXMove;
-    ScreenPressedYPos = ScreenYPos + PressedYMove;
-    
-    /*
-    To understand the extra math behind ITSELF, for ScreenX(/Y)Size you can look at GUIFunctions.GetScreenX as f(x), which equals (x * C + D) * E, where C = ScaleX, D = TranslateX, and E = width
-    This means f(a + b) = aCE + bCE + DE, but f(a) + f(b) = aCE + bCE + 2DE
-    If you consider PScrollX + XPos as a, and XSize as b, then what POSITION is calculating is f(a) - f(a + b), which equals aCE + bCE + DE - aCE - DE
-    aCE and DE cancle out, leaving just bCE
-    To calculate this easier (and more consistant), we skip all the extra steps and just calculate bCE.
-    */
-    
-  }
-  
-  
-  
-  public void RenderChildren() {
-    
-    PushMatrix();
-    Translate (XPos + CurrScrollX * XSize, YPos + CurrScrollY * YSize);
-    Scale (1 / XSize, 1 / YSize);
-    
-    /*
-    for (GUI_Element E : Children) { // Simplified version of code below (this code does the NotInFrame checks for every child instead of just once)
-      if (E.IsInFrame) {
-        E.Render();
-      } else {
-        if (RenderChildrenNotInFrame) {
-          E.Render();
-        } else if (UpdateChildrenNotInFrame) {
-          E.Render();
-        }
-      }
-    }
-    */
-    
-    if (RenderChildrenNotInFrame) { // Always render and update (Render = true, Update = true)
-      if (!UpdateChildrenNotInFrame) println ("Warning in " + this + ": UpdateChildrenNotInFrame is treated as true when RenderChildrenNotInFrame is true.");
-      
-      //println (this + " " + Children.size());
-      for (int i = 0; i < Children.size(); i ++) {
-        Children.get(i).Render();
-      }
-      
-    } else {
-      if (UpdateChildrenNotInFrame) { // Don't always render, but always update (Render = false, Update = true)
-        
-        for (GUI_Element E : Children) {
-          if (E.IsInFrame()) {
-            E.Render();
-          } else {
-            E.Update();
-          }
-        }
-        
-      } else { // Don't always render or update (Render = false, Update = false)
-        
-        for (GUI_Element E : Children) {
-          if (E.IsInFrame()) {
-            E.Render();
-          }
-        }
-        
-      }
-    }
-    
-    PopMatrix();
   }
   
   

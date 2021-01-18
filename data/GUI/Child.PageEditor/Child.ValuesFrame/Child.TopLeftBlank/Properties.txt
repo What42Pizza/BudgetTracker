@@ -15,3 +15,6 @@ YSize:
 
 EdgeSize:
 3
+
+RenderOrder:
+10

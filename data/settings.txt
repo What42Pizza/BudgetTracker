@@ -10,8 +10,8 @@ window size: 1200x675
 
 
 
-page name preset: [month]/--/[year]
-(default: [month]/--/[year])
+page name preset: [year]
+(default: [year])
 
 
 
