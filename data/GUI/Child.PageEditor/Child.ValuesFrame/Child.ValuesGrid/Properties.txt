@@ -1,0 +1,17 @@
+Name:
+ValuesGrid
+
+ElementType:
+ScrollingFrame
+
+HasFrame:
+false
+
+XPos:
+0.125
+YPos:
+0.1
+XSize:
+0.75
+YSize:
+0.8

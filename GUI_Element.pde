@@ -689,6 +689,20 @@ public class GUI_Element implements Cloneable {
   
   
   
+  public GUI_Element Sibling (String SiblingName, boolean PrintError) {
+    if (Parent == null) {
+      if (PrintError) println ("Error in " + this + ": Sibling() called (with argument " + '"' + SiblingName + '"' + "), but Parent == null.");
+      return null;
+    }
+    return Parent.Child(SiblingName, PrintError);
+  }
+  
+  public GUI_Element Sibling (String SiblingName) {
+    return Sibling (SiblingName, true);
+  }
+  
+  
+  
   public ArrayList <GUI_Element> AllDescendants() {
     //return AddAllChildren (new ArrayList <GUI_Element> ()); // This doesn't exactly work because it adds itself as a child, which isn't wanted
     ArrayList <GUI_Element> Output = new ArrayList <GUI_Element> ();

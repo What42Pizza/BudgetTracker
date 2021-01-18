@@ -1,7 +1,7 @@
 // Started 01/06/20
-// Last updated 01/15/20
+// Last updated 01/16/20
 
-// B 1.0.0
+// B 1.1.0
 
 
 
@@ -11,8 +11,12 @@
 
 Change log:
 
+B 1.1.0: 01/16/20
+Started work on new page editor
+
 B 1.0.0: 01/15/20
 Deleted old page editor
+Updated page manager to use new page system
 
 A 1.1.0: 01/14/21
 Finished page selector (mostly)
@@ -90,6 +94,7 @@ void setup() {
 void settings() {
   
   Settings.Init();
+  PageManager.BasicInit();
   InitGUI();
   PageManager.Init();
   History.Init();

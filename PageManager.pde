@@ -6,35 +6,43 @@ class PageManager_Class {
   
   
   
-  String[] ColumnNames;
   
+  // General
+  String[] ColumnNames;
+  boolean ChangesSaved = false;
+  File PagesFolder;
+  
+  // Page
   ArrayList <String> AllPageNames = null;
   ArrayList <String[]> CurrentPage;
   String PageName;
-  // The first string of a page is the name of that page
   
+  // Totals
   ArrayList <Float[]> PageNumValues;
   float[] PageColumnTotals;
   ArrayList <Float> PageRowTotals;
   float PageTotal = 0;
   
-  boolean ChangesSaved = false;
-  
-  File PagesFolder;
   
   
   
   
   
+  
+  
+  
+  
+  void BasicInit() { // ColumnNames is needed in InitGUI, but PageManager.Init() calls GUI functions
+    String DefaultColumnNames = "Jan" + char(9) + "Feb" + char (9) + "Mar" + char (9) + "Apr" + char (9) + "May" + char (9) + "June" + char (9) + "July" + char (9) + "Aug" + char (9) + "Sep" + char (9) + "Oct" + char (9) + "Nov" + char (9) + "Dec";
+    ColumnNames = split (Settings.GetString ("cloumn names", DefaultColumnNames), char(9));
+    PagesFolder = new File (dataPath("") + "/Pages");
+  }
   
   
   
   
   
   void Init() {
-    String DefaultColumnNames = "Jan" + char(9) + "Feb" + char (9) + "Mar" + char (9) + "Apr" + char (9) + "May" + char (9) + "June" + char (9) + "July" + char (9) + "Aug" + char (9) + "Sep" + char (9) + "Oct" + char (9) + "Nov" + char (9) + "Dec";
-    ColumnNames = split (Settings.GetString ("cloumn names", DefaultColumnNames), char(9));
-    PagesFolder = new File (dataPath("") + "/Pages");
     AllPageNames = ConvertStrings (loadStrings (dataPath("") + "/AllPageNames.txt"));
     if (PagesFolder.exists()) {
       if (PagesFolder.isDirectory()) {
@@ -284,6 +292,33 @@ class PageManager_Class {
   
   
   
+  String FillNamePreset (String PageNamePreset) {
+    PageNamePreset = ReplaceSequenceInString (PageNamePreset, "[second]", second() + "");
+    PageNamePreset = ReplaceSequenceInString (PageNamePreset, "[minute]", minute() + "");
+    PageNamePreset = ReplaceSequenceInString (PageNamePreset, "[hour]", hour() + "");
+    PageNamePreset = ReplaceSequenceInString (PageNamePreset, "[day]", day() + "");
+    PageNamePreset = ReplaceSequenceInString (PageNamePreset, "[month]", month() + "");
+    PageNamePreset = ReplaceSequenceInString (PageNamePreset, "[year]", year() + "");
+    //println (PageNamePreset);
+    return PageNamePreset;
+  }
+  
+  
+  
+  String GetPageFileName (String PageName) {
+    PageName = PageName.replaceAll("/", "_");
+    return PageName + ".txt";
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   void CalcTotals() {
     
     int NumOfColumns = ColumnNames.length + 1;
@@ -312,33 +347,6 @@ class PageManager_Class {
       PageNumValues.add (RowValues);
     }
     
-  }
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  String FillNamePreset (String PageNamePreset) {
-    PageNamePreset = ReplaceSequenceInString (PageNamePreset, "[second]", second() + "");
-    PageNamePreset = ReplaceSequenceInString (PageNamePreset, "[minute]", minute() + "");
-    PageNamePreset = ReplaceSequenceInString (PageNamePreset, "[hour]", hour() + "");
-    PageNamePreset = ReplaceSequenceInString (PageNamePreset, "[day]", day() + "");
-    PageNamePreset = ReplaceSequenceInString (PageNamePreset, "[month]", month() + "");
-    PageNamePreset = ReplaceSequenceInString (PageNamePreset, "[year]", year() + "");
-    //println (PageNamePreset);
-    return PageNamePreset;
-  }
-  
-  
-  
-  String GetPageFileName (String PageName) {
-    PageName = PageName.replaceAll("/", "_");
-    return PageName + ".txt";
   }
   
   

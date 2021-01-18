@@ -20,6 +20,11 @@ GUI_Element GUI_PageEditor_SelectPageButton;
 int SaveButton_FramesUntilReset = -1;
 String PrevPageName = null;
 
+GUI_Element GUI_PageEditor_ValuesGrid;
+GUI_Element GUI_PageEditor_ColumnTotals;
+GUI_Element GUI_PageEditor_RowTotals;
+GUI_Element GUI_PageEditor_PageTotal;
+
 GUI_Element GUI_ConfirmExitWindow;
 GUI_Element GUI_ConfirmExitWindow_ExitButton;
 
@@ -39,24 +44,38 @@ GUI_Element GUI_SBPMW_SelectedPageName;
 
 
 
+
+
+
+
+
 void InitGUI() {
+  LoadGUI();
+  SetGUIActions();
+  InitValueElements();
+}
+
+
+
+void LoadGUI() {
   
-  
-  
-  // Load GUI and set vars
-  
+  // Main
   GUI_Main = new GUI_Element (new File (dataPath("") + "/GUI"));
   
+  // Global
   GUI_ExitButton = GUI_Main.Child("ExitButton");
   
-  GUI_PageSelector = GUI_Main.Child("PageSelector");
   
+  // PageSelector
+  GUI_PageSelector = GUI_Main.Child("PageSelector");
   GUI_Element PagesFrame = GUI_PageSelector.Child("PagesFrame");
   GUI_PageSelector_BackButton = GUI_PageSelector.Child("BackButton");
   GUI_PageSelector_CreatePageButton = PagesFrame.Child("CreatePageButton");
   GUI_PageSelector_PagePreset = PagesFrame.Child("PagePreset");
   GUI_PageSelector_AllPages = PagesFrame.Child("AllPages");
   
+  
+  // PageEditor
   GUI_PageEditor = GUI_Main.Child("PageEditor");
   
   GUI_PageEditor_PageName = GUI_PageEditor.Child("PageName");
@@ -66,26 +85,43 @@ void InitGUI() {
   GUI_PageEditor_NewPageButton = GUI_PageEditor.Child("NewPageButton");
   GUI_PageEditor_SelectPageButton = GUI_PageEditor.Child("SelectPageButton");
   
+  GUI_Element ValuesFrame = GUI_PageEditor.Child("ValuesFrame");
+  GUI_PageEditor_ValuesGrid = ValuesFrame.Child("ValuesGrid");
+  GUI_PageEditor_ColumnTotals = ValuesFrame.Child("ColumnTotals");
+  GUI_PageEditor_RowTotals = ValuesFrame.Child("RowTotals");
+  GUI_PageEditor_PageTotal = ValuesFrame.Child("BottomRightPageTotal");
+  
+  
+  // Windows
   GUI_Element Windows = GUI_Main.Child("Windows");
   
+  // ConfirmExit
   GUI_ConfirmExitWindow = Windows.Child("ConfirmExitWindow");
   GUI_ConfirmExitWindow_ExitButton = GUI_ConfirmExitWindow.Child("MainWindow").Child("ExitButton");
   
+  // SaveBeforeExit
   GUI_SaveBeforeExitWindow = Windows.Child("SaveBeforeExitWindow");
   GUI_SaveBeforeExitWindow_ExitWSavingButton = GUI_SaveBeforeExitWindow.Child("MainWindow").Child("ExitWithSavingButton");
   
+  // SaveBeforeNewPage
   GUI_SaveBeforeNewPageWindow = Windows.Child("SaveBeforeNewPageWindow");
   GUI_SBNPW_CreatePageWOSavingButton = GUI_SaveBeforeNewPageWindow.Child("MainWindow").Child("CreatePageWithoutSavingButton");
   GUI_SBNPW_CreatePageWSavingButton = GUI_SaveBeforeNewPageWindow.Child("MainWindow").Child("CreatePageWithSavingButton");
   
+  // SaveBeforePageMave
   GUI_SaveBeforePageMoveWindow = Windows.Child("SaveBeforePageMoveWindow");
   GUI_SBPMW_MoveWSavingButton = GUI_SaveBeforePageMoveWindow.Child("MainWindow").Child("MovePageWithSavingButton");
   GUI_SBPMW_MoveWOSavingButton = GUI_SaveBeforePageMoveWindow.Child("MainWindow").Child("MovePageWithoutSavingButton");
   GUI_SBPMW_SelectedPageName = GUI_SaveBeforePageMoveWindow.Child("SelectedPageName");
   
+}
+
+
+
+
+
+void SetGUIActions() {
   
-  
-  // Set button actions
   
   
   // ConfirmExitWindow.ExitButton
@@ -112,7 +148,6 @@ void InitGUI() {
     GUI_SBNPW_CreatePageWSavingButton.Pressed = false; // Wait is this really needed?
   }};
   
-  
   // SaveBeforeNewPageWindow_CreatePageWOSavingButton
   GUI_SBNPW_CreatePageWOSavingButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     PageManager.CreateBasicPage();
@@ -133,7 +168,6 @@ void InitGUI() {
     GUI_SBPMW_MoveWOSavingButton.OnButtonPressed.Run (null);
   }};
   
-  
   // SaveBeforePageMoveWindow.MoveWOSavingButton
   GUI_SBPMW_MoveWOSavingButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     PageManager.LoadPage (GUI_SBPMW_SelectedPageName.Text);
@@ -146,7 +180,7 @@ void InitGUI() {
   
   
   
-  // NewPageButton
+  // PageEditor.NewPageButton
   GUI_PageEditor_NewPageButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     if (PageManager.ChangesSaved) {
       GUI_SBNPW_CreatePageWOSavingButton.OnButtonPressed.Run (null);
@@ -156,7 +190,7 @@ void InitGUI() {
   }};
   
   
-  // SelectPageButton
+  // PageEditor.SelectPageButton
   GUI_PageEditor_SelectPageButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     GUI_PageEditor.Enabled = false;
     GUI_PageSelector.Enabled = true;
@@ -165,7 +199,7 @@ void InitGUI() {
   }};
   
   
-  // SaveButton
+  // PageEditor.SaveButton
   GUI_PageEditor_SaveButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     PageManager.Save();
     GUI_PageEditor_SaveButton.Text = "Saved!";
@@ -203,6 +237,11 @@ void InitGUI() {
   
   
 }
+
+
+
+
+
 
 
 
@@ -291,6 +330,46 @@ void UpdatePageEditorElements() {
     PageName.PlaceholderText = PageName.Text;
   }
   
+  
+}
+
+
+
+
+
+
+
+
+
+
+void InitValueElements() {
+  
+  GUI_Element SizeExample = GUI_PageEditor_PageTotal;
+  float ValueXSize = SizeExample.XSize / (1 - SizeExample.XSize * 2); // Find what percent the value size is of the ValuesGrid size
+  float ValueYSize = SizeExample.YSize / (1 - SizeExample.YSize * 2);
+  
+  InitColumnElements (ValueXSize);
+  
+}
+
+
+
+void InitColumnElements (float ValueXSize) {
+  String[] ColumnNames = PageManager.ColumnNames;
+  GUI_Element ColumnsFrame = GUI_PageEditor_ValuesGrid.Sibling("ColumnNames");
+  ColumnsFrame.MaxScrollX = ColumnNames.length * ValueXSize - 1;
+  
+  GUI_Element ColumnLabelPreset = new GUI_Element ("TextFrame", "CLP");
+  ColumnLabelPreset.YPos = 0;
+  ColumnLabelPreset.XSize = ValueXSize;
+  ColumnLabelPreset.YSize = 1;
+  
+  for (int i = 0; i < ColumnNames.length; i ++) {
+    GUI_Element NewColumnLabel = (GUI_Element) ColumnLabelPreset.clone();
+    NewColumnLabel.XPos = ValueXSize * i;
+    NewColumnLabel.Text = ColumnNames[i];
+    ColumnsFrame.AddChild(NewColumnLabel);
+  }
   
 }
 

@@ -1,0 +1,14 @@
+Name:
+ValuesFrame
+
+ElementType:
+Holder
+
+XPos:
+0.025
+YPos:
+0.2
+XSize:
+0.95
+YSize:
+0.775
