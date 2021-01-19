@@ -69,8 +69,8 @@ class History_Class {
   
   void UpdateAll() {
     PageManager.ChangesSaved = false;
-    PageManager.CalcTotals();
     ResetValueElements();
+    PageManager.CalcTotals();
   }
   
   

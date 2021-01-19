@@ -1,7 +1,7 @@
 // Started 01/06/20
-// Last updated 01/18/20
+// Last updated 01/19/20
 
-// B 1.2.0
+// B 1.3.0
 
 
 
@@ -10,6 +10,9 @@
 /*
 
 Change log:
+
+B 1.3.0: 01/19/21
+More work on page editor (almost done)
 
 B 1.2.0: 01/18/21
 More work on page editor

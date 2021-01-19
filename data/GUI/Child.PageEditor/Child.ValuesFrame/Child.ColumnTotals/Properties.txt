@@ -26,3 +26,6 @@ ScrollSpeedX:
 1
 ScrollSpeedY:
 0
+
+MaxScrollY:
+0

@@ -21,3 +21,9 @@ BackgroundColor:
 
 RenderChildrenNotInFrame:
 false
+
+MaxScrollX:
+0
+
+ScrollSpeedY:
+1.5

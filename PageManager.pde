@@ -18,9 +18,9 @@ class PageManager_Class {
   String PageName;
   
   // Totals
-  ArrayList <Float[]> PageNumValues;
-  float[] PageColumnTotals;
-  ArrayList <Float> PageRowTotals;
+  ArrayList <Float[]> NumValues;
+  float[] ColumnTotals;
+  ArrayList <Float> RowTotals;
   float PageTotal = 0;
   
   
@@ -98,8 +98,8 @@ class PageManager_Class {
     this.PageName = RawPage[0];
     
     CurrentPage = DeserializeRawPage (RawPage);
-    CalcTotals();
     ResetValueElements();
+    CalcTotals();
     ChangesSaved = true;
     History.Reset();
     //History.SwitchToPage (CurrentPage.get(0));
@@ -172,6 +172,25 @@ class PageManager_Class {
   
   
   
+  void SetRowName (int RowIndex, String NewName) {
+    String[] RowToEdit = CurrentPage.remove (RowIndex);
+    if (!RowToEdit[0].equals(NewName)) {
+      RowToEdit[0] = NewName;
+      ChangesSaved = false;
+      History.AddSavePoint();
+    }
+    CurrentPage.add (RowIndex, RowToEdit);
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   String[] SerializeCurrentPage() {
     int NumOfColumns = ColumnNames.length + 1;
     int NumOfRows = CurrentPage.size();
@@ -207,11 +226,13 @@ class PageManager_Class {
     // Deserialize
     ArrayList <String[]> Output = new ArrayList <String[]> ();
     int NumOfRows = NumOfRawRows / NumOfColumns;
+    int Index = 1;
     
     for (int i = 0; i < NumOfRows; i ++) {
       String[] NewLine = new String [NumOfColumns];
       for (int j = 0; j < NumOfColumns; j ++) {
-        NewLine[j] = In [j + i + 1];
+        NewLine[j] = In [Index];
+        Index ++;
       }
       Output.add (NewLine);
     }
@@ -260,8 +281,8 @@ class PageManager_Class {
     CurrentPage = CreateNewPage();
     AllPageNames.add(PageName);
     //History.SwitchToPage (CurrentPage.get(0));
-    CalcTotals();
     ResetValueElements();
+    CalcTotals();
     ChangesSaved = true;
   }
   
@@ -321,32 +342,47 @@ class PageManager_Class {
   
   void CalcTotals() {
     
-    int NumOfColumns = ColumnNames.length + 1;
-    PageNumValues = new ArrayList <Float[]> ();
-    PageRowTotals = new ArrayList <Float> ();
-    PageColumnTotals = new float [NumOfColumns];
+    int NumOfColumns = ColumnNames.length;
+    NumValues = new ArrayList <Float[]> ();
+    RowTotals = new ArrayList <Float> ();
+    ColumnTotals = new float [ColumnNames.length];
     PageTotal = 0;
     
-    for (int i = 0; i < NumOfColumns; i ++) PageRowTotals.add(0.0);
-    
     for (int i = 0; i < CurrentPage.size(); i ++) {
-      Float[] RowValues = new Float [NumOfColumns];
+      Float[] CurrRowValues = new Float [NumOfColumns];
+      float CurrRowTotal = 0.0;
       for (int j = 0; j < NumOfColumns; j ++) { // i = row, j = column
         try {
           
-          float CastedFloat = Float.parseFloat (CurrentPage.get(i)[j]);
-          RowValues[j] = CastedFloat;
-          PageRowTotals.add (j, PageRowTotals.remove (j) + CastedFloat);
-          PageColumnTotals[i] += CastedFloat;
+          float CastedFloat = Float.parseFloat (CurrentPage.get(i)[j+1]);
+          CurrRowValues[j] = CastedFloat;
+          CurrRowTotal += CastedFloat;
+          //RowTotals.add (j, RowTotals.remove (j) + CastedFloat);
+          ColumnTotals[j] += CastedFloat;
           PageTotal += CastedFloat;
           
         } catch (NumberFormatException e) {
-          RowValues[j] = null;
+          CurrRowValues[j] = null;
         }
       }
-      PageNumValues.add (RowValues);
+      RowTotals.add (CurrRowTotal);
+      NumValues.add (CurrRowValues);
     }
     
+    UpdateTotalElements();
+    
+  }
+  
+  
+  
+  
+  
+  String[] GetRowNames() {
+    String[] Output = new String [CurrentPage.size()];
+    for (int i = 0; i < Output.length; i ++) {
+      Output[i] = CurrentPage.get(i)[0];
+    }
+    return Output;
   }
   
   

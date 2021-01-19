@@ -18,3 +18,11 @@ YSize:
 
 RenderOrder:
 0
+
+RenderChildrenNotInFrame:
+false
+
+ScrollSpeedX:
+1
+ScrollSpeedY:
+1.5
