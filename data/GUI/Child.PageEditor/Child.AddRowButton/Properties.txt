@@ -1,0 +1,22 @@
+Name:
+AddRowButton
+
+ElementType:
+TextButton
+
+XPos:
+0
+YPos:
+0.925
+XSize:
+0.3
+YSize:
+0.075
+
+Text:
+Add Row
+
+XPixelOffset:
+-1
+XSizePixelOffset:
+1

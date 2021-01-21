@@ -102,6 +102,7 @@ class PageManager_Class {
     CalcTotals();
     ChangesSaved = true;
     History.Reset();
+    History.AddSavePoint();
     //History.SwitchToPage (CurrentPage.get(0));
     
   }
@@ -180,6 +181,39 @@ class PageManager_Class {
       History.AddSavePoint();
     }
     CurrentPage.add (RowIndex, RowToEdit);
+  }
+  
+  
+  
+  void SetValue (int RowIndex, int ColumnIndex, String NewValue) {
+    String[] RowToEdit = CurrentPage.remove (RowIndex);
+    if (!RowToEdit[ColumnIndex+1].equals(NewValue)) {
+      RowToEdit[ColumnIndex+1] = NewValue;
+      CurrentPage.add (RowIndex, RowToEdit);
+      CalcRowTotal (RowIndex);
+      CalcColumnTotal (ColumnIndex);
+      CalcPageTotal();
+      UpdateTotalElementsForValue (RowIndex, ColumnIndex);
+      History.AddSavePoint();
+      ChangesSaved = false;
+    } else {
+      CurrentPage.add (RowIndex, RowToEdit);
+    }
+  }
+  
+  
+  
+  void AddRow() {
+    String[] NewRow = new String [ColumnNames.length + 1];
+    NewRow[0] = "New Line:";
+    for (int i = 1; i < NewRow.length; i ++) NewRow[i] = "";
+    CurrentPage.add (NewRow);
+    RowTotals.add (0.0);
+  }
+  
+  void RemoveRow() {
+    CurrentPage.remove (CurrentPage.size() - 1);
+    RowTotals.remove (RowTotals.size() - 1);
   }
   
   
@@ -370,6 +404,77 @@ class PageManager_Class {
     }
     
     UpdateTotalElements();
+    
+  }
+  
+  
+  
+  
+  
+  void CalcRowTotal (int RowIndex) {
+    Float RowTotal = 0.0;
+    String[] CurrRow = CurrentPage.get (RowIndex);
+    
+    // Cast & add
+    for (int i = 1; i < CurrRow.length; i ++) {
+      try {
+        String S = CurrRow[i];
+        Float CastedFloat = Float.parseFloat (S);
+        RowTotal += CastedFloat;
+      } catch (NumberFormatException e) {
+        //RowTotal += 0;
+      }
+    }
+    
+    // Set new value
+    RowTotals.remove (RowIndex);
+    RowTotals.add (RowIndex, RowTotal);
+    
+  }
+  
+  
+  
+  
+  
+  void CalcColumnTotal (int ColumnIndex) {
+    float ColumnTotal = 0.0;
+    
+    // Cast & add
+    for (String[] Row : CurrentPage) {
+      try {
+        float CastedFloat = Float.parseFloat (Row[ColumnIndex+1]);
+        ColumnTotal += CastedFloat;
+      } catch (NumberFormatException e) {
+        //RowTotal += 0;
+      }
+    }
+    
+    // Set new value
+    ColumnTotals[ColumnIndex] = ColumnTotal;
+    
+  }
+  
+  
+  
+  
+  
+  void CalcPageTotal() {
+    float Total = 0.0;
+    
+    // Cast & add
+    for (String[] Row : CurrentPage) {
+      for (String S : Row) {
+        try {
+          Float CastedFloat = Float.parseFloat (S);
+          Total += CastedFloat;
+        } catch (NumberFormatException e) {
+          //Total += 0;
+        }
+      }
+    }
+    
+    // Set new value
+    PageTotal = Total;
     
   }
   

@@ -528,7 +528,7 @@ public class GUI_Element implements Cloneable {
   
   public void UpdatePressed() {
     if (Pressed) {
-      Pressed = mousePressed || this.HasMouseHovering() || (ButtonKey != -1 && GUIFunctions.KeyIsPressed (ButtonKey)); // Stay pressed unitl none are true
+      Pressed = (mousePressed && this.HasMouseHovering()) || (ButtonKey != -1 && GUIFunctions.KeyIsPressed (ButtonKey)); // Stay pressed unitl none are true
     } else {
       Pressed = this.JustClicked(); // Start being pressed if just not clicked
     }

@@ -29,6 +29,9 @@ GUI_Element GUI_PageEditor_PageTotal;
 float ValueXSize;
 float ValueYSize;
 
+GUI_Element GUI_PageEditor_AddRowButton;
+GUI_Element GUI_PageEditor_RemoveRowButton;
+
 GUI_Element GUI_ConfirmExitWindow;
 GUI_Element GUI_ConfirmExitWindow_ExitButton;
 
@@ -96,6 +99,9 @@ void LoadGUI() {
   GUI_PageEditor_RowNames = ValuesFrame.Child("RowNames");
   GUI_PageEditor_RowTotals = ValuesFrame.Child("RowTotals");
   GUI_PageEditor_PageTotal = ValuesFrame.Child("BottomRightPageTotal");
+  
+  GUI_PageEditor_AddRowButton = GUI_PageEditor.Child("AddRowButton");
+  GUI_PageEditor_RemoveRowButton = GUI_PageEditor.Child("RemoveRowButton");
   
   // Syncing Scolling
   GUI_PageEditor_ColumnNames.ScrollIsSyncedWith = new GUI_Element[] {
@@ -235,6 +241,44 @@ void SetGUIActions() {
     PageManager.Save();
     GUI_PageEditor_SaveButton.Text = "Saved!";
     SaveButton_FramesUntilReset = (int) frameRate; // Wait ~1 second
+  }};
+  
+  
+  // PageEditor.AddRowButton
+  GUI_PageEditor_AddRowButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
+    GUI_Element ValuesGrid = GUI_PageEditor_ValuesGrid;
+    boolean ScrollWasMaxed = ValuesGrid.TargetScrollY == ValuesGrid.MaxScrollY * -1;
+    
+    PageManager.AddRow();
+    ResetValueElements();
+    UpdateTotalElements();
+    History.AddSavePoint();
+    PageManager.ChangesSaved = false;
+    
+    if (ScrollWasMaxed) {
+      float NewTargetScroll = ValuesGrid.MaxScrollY * -1;
+      GUI_PageEditor_RowNames.TargetScrollY = NewTargetScroll;
+      GUI_PageEditor_RowTotals.TargetScrollY = NewTargetScroll;
+      ValuesGrid.TargetScrollY = NewTargetScroll;
+    }
+    
+  }};
+  
+  
+  // PageEditor.RemoveRowButton
+  GUI_PageEditor_RemoveRowButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
+    if (PageManager.CurrentPage.size() == 0) return;
+    
+    PageManager.RemoveRow();
+    ResetValueElements();
+    UpdateTotalElements();
+    History.AddSavePoint();
+    PageManager.ChangesSaved = false;
+    
+    GUI_PageEditor_RowNames.ConstrainScroll();
+    GUI_PageEditor_RowTotals.ConstrainScroll();
+    GUI_PageEditor_ValuesGrid.ConstrainScroll();
+    
   }};
   
   
@@ -386,7 +430,7 @@ void InitValueElements() {
 
 
 
-void InitColumnNames () {
+void InitColumnNames() {
   
   // Get vars
   String[] ColumnNames = PageManager.ColumnNames;
@@ -414,7 +458,7 @@ void InitColumnNames () {
 
 
 
-void InitColumnTotals () {
+void InitColumnTotals() {
   
   // Get vars
   String[] ColumnNames = PageManager.ColumnNames;
@@ -460,14 +504,14 @@ void ResetValueElements() {
 
 void ResetRowNames() {
   
-  // Set scroll
-  GUI_PageEditor_RowNames.MaxScrollY = max (PageManager.CurrentPage.size() * ValueYSize - 1, 0);
-  
-  // Action for elements
+  // Action
   Action Action_OnTextFinished = new Action() {@Override public void Run (GUI_Element This) {
     int RowIndex = Integer.parseInt (This.Name);
     PageManager.SetRowName (RowIndex, This.Text);
   }};
+  
+  // Set scroll
+  GUI_PageEditor_RowNames.MaxScrollY = max (PageManager.CurrentPage.size() * ValueYSize - 1, 0);
   
   // Create preset
   GUI_Element RowNamePreset = new GUI_Element ("TextBox", "RNP");
@@ -478,6 +522,7 @@ void ResetRowNames() {
   RowNamePreset.XSizePixelOffset = -2;
   
   // Create individual elements
+  GUI_PageEditor_RowNames.DeleteChildren();
   String[] RowNames = PageManager.GetRowNames();
   for (int i = 0; i < RowNames.length; i ++) {
     GUI_Element NewRowName = (GUI_Element) RowNamePreset.clone();
@@ -506,6 +551,7 @@ void ResetRowTotals() {
   RowTotalPreset.XSizePixelOffset = -2;
   
   // Create individual elements
+  GUI_PageEditor_RowTotals.DeleteChildren();
   int NumOfRows = PageManager.CurrentPage.size();
   for (int i = 0; i < NumOfRows; i ++) {
     GUI_Element NewRowName = (GUI_Element) RowTotalPreset.clone();
@@ -520,6 +566,14 @@ void ResetRowTotals() {
 
 void ResetGridValues() {
   
+  // Action
+  Action Action_OnTextFinished = new Action() {@Override public void Run (GUI_Element This) {
+    String[] NameTokens = split (This.Name, ' ');
+    int ThisRowIndex = Integer.parseInt (NameTokens[0]);
+    int ThisColumnIndex = Integer.parseInt (NameTokens[1]);
+    PageManager.SetValue (ThisRowIndex, ThisColumnIndex, This.Text);
+  }};
+  
   // Set scroll
   GUI_PageEditor_ValuesGrid.MaxScrollX = max (PageManager.ColumnNames.length * ValueXSize - 1, 0);
   GUI_PageEditor_ValuesGrid.MaxScrollY = max (PageManager.CurrentPage.size() * ValueYSize - 1, 0);
@@ -528,17 +582,22 @@ void ResetGridValues() {
   GUI_Element ValuePreset = new GUI_Element ("TextBox", "Value");
   ValuePreset.XSize = ValueXSize;
   ValuePreset.YSize = ValueYSize;
+  ValuePreset.TextResetsOnEdit = false;
+  ValuePreset.UsePlaceholderText = false;
   
   // Create individual elements
+  GUI_PageEditor_ValuesGrid.DeleteChildren();
   int NumOfRows = PageManager.CurrentPage.size();
   int NumOfColumns = PageManager.ColumnNames.length;
   for (int R = 0; R < NumOfRows; R ++) {
     String[] CurrentRow = PageManager.CurrentPage.get(R);
     for (int C = 0; C < NumOfColumns; C ++) {
       GUI_Element NewValue = (GUI_Element) ValuePreset.clone();
+      NewValue.Name = R + " " + C;
       NewValue.XPos = ValueXSize * C;
       NewValue.YPos = ValueYSize * R;
       NewValue.Text = CurrentRow[C+1];
+      NewValue.OnTextFinished = Action_OnTextFinished;
       GUI_PageEditor_ValuesGrid.AddChild(NewValue);
     }
   }
@@ -551,19 +610,41 @@ void ResetGridValues() {
 
 void UpdateTotalElements() {
   
-  // Rows
+  // Row totals
   ArrayList <Float> RowTotals = PageManager.RowTotals;
   for (int i = 0; i < RowTotals.size(); i ++) {
     GUI_Element CurrTotal = GUI_PageEditor_RowTotals.Child(Integer.toString(i));
     CurrTotal.Text = Float.toString(RowTotals.get(i));
   }
   
-  // Columns
+  // Column totals
   float[] ColumnTotals = PageManager.ColumnTotals;
   for (int i = 0; i < ColumnTotals.length; i ++) {
     GUI_Element CurrTotal = GUI_PageEditor_ColumnTotals.Child(Integer.toString(i));
     CurrTotal.Text = Float.toString(ColumnTotals[i]);
   }
+  
+  // Page total
+  GUI_PageEditor_PageTotal.Text = Float.toString (PageManager.PageTotal);
+  
+}
+
+
+
+
+
+void UpdateTotalElementsForValue (int RowIndex, int ColumnIndex) {
+  
+  // Row total
+  GUI_Element RowTotalElement = GUI_PageEditor_RowTotals.Child(Integer.toString (RowIndex));
+  RowTotalElement.Text = Float.toString (PageManager.RowTotals.get(RowIndex));
+  
+  // Column total
+  GUI_Element ColumnTotalElement = GUI_PageEditor_ColumnTotals.Child(Integer.toString (ColumnIndex));
+  ColumnTotalElement.Text = Float.toString (PageManager.ColumnTotals[ColumnIndex]);
+  
+  // Page total
+  GUI_PageEditor_PageTotal.Text = Float.toString (PageManager.PageTotal);
   
 }
 

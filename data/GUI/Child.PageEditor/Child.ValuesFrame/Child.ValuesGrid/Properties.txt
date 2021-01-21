@@ -4,9 +4,6 @@ ValuesGrid
 ElementType:
 ScrollingFrame
 
-HasFrame:
-false
-
 XPos:
 0.125
 YPos:

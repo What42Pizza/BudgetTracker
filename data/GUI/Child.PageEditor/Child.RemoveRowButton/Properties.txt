@@ -1,0 +1,17 @@
+Name:
+RemoveRowButton
+
+ElementType:
+TextButton
+
+XPos:
+0.3
+YPos:
+0.925
+XSize:
+0.3
+YSize:
+0.075
+
+Text:
+Remove Row

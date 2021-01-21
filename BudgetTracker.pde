@@ -1,7 +1,7 @@
 // Started 01/06/20
-// Last updated 01/19/20
+// Last updated 01/21/20
 
-// B 1.3.0
+// V 1.0.0
 
 
 
@@ -10,6 +10,12 @@
 /*
 
 Change log:
+
+V 1.0.0: 01/21/21
+Finished page editor(?)
+  Changes to values are savable
+  Added Add Row and Remove Row buttons
+  1800 lines of code! (not including GUISystem2)
 
 B 1.3.0: 01/19/21
 More work on page editor (almost done)
