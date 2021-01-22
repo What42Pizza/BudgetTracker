@@ -61,7 +61,7 @@ class Settings_Class {
     SettingName += ": ";
     for (String S : Settings) {
       if (S.startsWith(SettingName)) {
-        return S.substring(SettingName.length() + 1);
+        return S.substring(SettingName.length());
       }
     }
     println ("Error: could not find setting " + '"' + SettingName + '"' + ".");
@@ -70,9 +70,10 @@ class Settings_Class {
   }
   
   String GetString (String SettingName, String DefaultValue) {
+    SettingName += ": ";
     for (String S : Settings) {
-      if (S.startsWith(SettingName + ':')) {
-        return S.substring(SettingName.length() + 2);
+      if (S.startsWith(SettingName)) {
+        return S.substring(SettingName.length());
       }
     }
     return DefaultValue;

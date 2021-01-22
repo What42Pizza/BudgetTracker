@@ -1,7 +1,7 @@
 // Started 01/06/20
-// Last updated 01/21/20
+// Last updated 01/22/20
 
-// V 1.0.0
+// V 1.0.1
 
 
 
@@ -10,6 +10,9 @@
 /*
 
 Change log:
+
+V 1.0.1: 01/22/21
+Fixed bug with settings that disabled fullscreen
 
 V 1.0.0: 01/21/21
 Finished page editor(?)
