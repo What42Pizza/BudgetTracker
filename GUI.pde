@@ -8,6 +8,7 @@ GUI_Element GUI_PageSelector_BackButton;
 GUI_Element GUI_PageSelector_CreatePageButton;
 GUI_Element GUI_PageSelector_PagePreset;
 GUI_Element GUI_PageSelector_AllPages;
+GUI_Element GUI_PageSelector_SettingsButton;
 
 GUI_Element GUI_PageEditor;
 
@@ -80,6 +81,7 @@ void LoadGUI() {
   GUI_PageSelector_CreatePageButton = PagesFrame.Child("CreatePageButton");
   GUI_PageSelector_PagePreset = PagesFrame.Child("PagePreset");
   GUI_PageSelector_AllPages = PagesFrame.Child("AllPages");
+  GUI_PageSelector_SettingsButton = GUI_PageSelector.Child("SettingsButton");
   
   
   // PageEditor
@@ -307,6 +309,12 @@ void SetGUIActions() {
       GUI_SBPMW_SelectedPageName.Text = This.Text;
       GUI_SaveBeforePageMoveWindow.Enabled = true;
     }
+  }};
+  
+  
+  // PageSelector.SettingsButton
+  GUI_PageSelector_SettingsButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
+    OpenFileWithEditor (dataPath("") + "/settings.txt");
   }};
   
   
@@ -743,4 +751,30 @@ void CloseAllWindows() {
   GUI_SaveBeforeExitWindow.Enabled = false;
   GUI_SaveBeforeNewPageWindow.Enabled = false;
   GUI_SaveBeforePageMoveWindow.Enabled = false;
+}
+
+
+
+
+
+void OpenFileWithEditor (String FilePath) {
+  
+  // This is from https://stackoverflow.com/questions/1872564/how-can-i-excute-notepad-by-java-code
+  try {
+    Runtime.getRuntime().exec(new String[] {"cmd.exe", "/c", FilePath});
+  } catch (IOException e) {
+    println ("Error while opening " + FilePath + ": " + e);
+    e.printStackTrace();
+  }
+  
+  // This is from https://stackoverflow.com/questions/3487149/how-to-open-the-notepad-file-in-java // This one ONLY opens with notepad, the above code uses whatever program opens .txt files on your computer
+  /*
+  ProcessBuilder pb = new ProcessBuilder("Notepad.exe", FilePath);
+  try {
+    pb.start();
+  } catch (IOException e) {
+    println (e);
+  }
+  */
+  
 }

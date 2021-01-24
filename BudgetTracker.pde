@@ -1,7 +1,7 @@
 // Started 01/06/20
-// Last updated 01/22/20
+// Last updated 01/24/20
 
-// V 1.0.1
+// V 1.0.2
 
 
 
@@ -10,6 +10,9 @@
 /*
 
 Change log:
+
+V 1.0.2: 01/24/21
+Added 'Open Settings' button
 
 V 1.0.1: 01/22/21
 Fixed bug with settings that disabled fullscreen

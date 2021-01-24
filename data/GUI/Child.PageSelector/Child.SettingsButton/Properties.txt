@@ -1,0 +1,17 @@
+Name:
+SettingsButton
+
+ElementType:
+TextButton
+
+XPos:
+0.11
+YPos:
+0.05
+XSize:
+0.1
+YSize:
+0.09
+
+Text:
+Open Settings

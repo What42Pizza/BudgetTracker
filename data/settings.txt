@@ -1,5 +1,7 @@
 Settings
 
+In order for the changes to apply, you need to save this and re-open My Budget.
+
 
 
 fullscreen: false
