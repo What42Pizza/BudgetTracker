@@ -312,6 +312,7 @@ public class GUI_Element implements Cloneable {
   public void Render() { // Call RenderThis() and UpdateThis() on this and children
     if (Enabled) {
       UpdateThis();
+      if (Deleted) return;
       UpdateChildren();
       if (Visible) RenderThis();
       RenderChildren();
@@ -333,6 +334,7 @@ public class GUI_Element implements Cloneable {
   public void Update() { // Call UpdateThis() on this and children
     if (Enabled) {
       UpdateThis();
+      if (Deleted) return;
       UpdateChildren();
     }
   }

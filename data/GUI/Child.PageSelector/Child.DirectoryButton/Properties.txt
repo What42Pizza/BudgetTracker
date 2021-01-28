@@ -1,0 +1,17 @@
+Name:
+DirectoryButton
+
+ElementType:
+TextButton
+
+XPos:
+0.22
+YPos:
+0.05
+XSize:
+0.11
+YSize:
+0.09
+
+Text:
+Open Directory

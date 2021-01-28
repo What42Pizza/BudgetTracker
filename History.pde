@@ -1,47 +1,70 @@
 // This keeps track of all the changes so they can be undone and redone
 
-History_Class History = new History_Class();
 
 
-
-class History_Class {
+HistorySystem History = new HistorySystem() {
   
-  
-  
-  //ArrayList <String> SavedUndoChainNames = new ArrayList <String> ();
-  //ArrayList <ArrayList <ArrayList <String>>> AllSavedPages = new ArrayList <ArrayList <ArrayList <String>>> ();
-  
-  ArrayList <ArrayList <String[]>> SavedPages = new ArrayList <ArrayList <String[]>> ();
-  ArrayList <ArrayList <String>> SavedPageNames = new ArrayList <ArrayList <String>> ();
-  ArrayList <String> SavedNames = new ArrayList <String> ();
-  int CurrentIndex = -1;
-  
-  int MaxUndoChain;
-  
-  
-  
-  void Init() {
-    MaxUndoChain = Settings.GetInt ("max undo chain", 100);
-    /*
-    for (String S : PageManager.AllPageNames) {
-      SavedUndoChainNames.add (S);
-      AllSavedPages.add (new ArrayList <ArrayList <String>> ());
-    }
-    */
+  @Override public Cloneable_AsClass GetCloneable() {
+    return PageManager;
   }
+  
+  @Override public void SetCloneable (Cloneable_AsClass NewCloneable) {
+    PageManager = (PageManager_Class) NewCloneable;
+    PageManager.ChangesSaved = false;
+    ResetValueElements();
+    PageManager.CalcTotals();
+  }
+  
+};
+
+
+
+
+
+
+
+
+
+
+abstract class Cloneable_AsClass implements Cloneable {
+  public Object clone() {
+    try {return super.clone();} catch (CloneNotSupportedException e) {return null;}
+  }
+}
+
+
+
+class HistorySystem {
+  
+  
+  
+  // Needs to be overridden
+  
+  public Cloneable_AsClass GetCloneable() {
+    return null;
+  }
+  
+  public void SetCloneable (Cloneable_AsClass NewCloneable) {
+    
+  }
+  
+  
+  
+  
+  
+  ArrayList <Cloneable_AsClass> SavedCloneables;
+  int CurrentIndex = -1;
+  int MaxUndoChain = 100;
   
   
   
   void AddSavePoint() {
     //if (SavedPages.size() > 0 && SavedPages.get(SavedPages.size() - 1).equals(PageManager.CurrentPage)) return; // No need to add save point when no change has been made // Actually, this should be handled by whatever is calling this function
-    while (CurrentIndex < SavedPages.size() - 1) { // If changes were undone, remove all undone changes before adding to history
-      SavedPages.remove (SavedPages.size() - 1);
-      SavedPageNames.remove (SavedPages.size());
-      SavedNames.remove (PageManager.PageName);
+    while (CurrentIndex < SavedCloneables.size() - 1) { // If changes were undone, remove all undone changes before adding to history
+      SavedCloneables.remove (SavedCloneables.size() - 1);
     }
-    SavedPages.add ((ArrayList <String[]>) PageManager.CurrentPage.clone());
-    SavedPageNames.add ((ArrayList <String>) PageManager.AllPageNames.clone());
-    SavedNames.add (PageManager.PageName);
+    SavedCloneables.add ((Cloneable_AsClass) GetCloneable().clone());
+    if (SavedCloneables.size() > MaxUndoChain) SavedCloneables.remove (0);
     CurrentIndex ++;
   }
   
@@ -49,36 +72,28 @@ class History_Class {
   
   void Undo() {
     CurrentIndex --;
-    PageManager.CurrentPage = (ArrayList <String[]>) SavedPages.get (CurrentIndex).clone();
-    PageManager.AllPageNames = (ArrayList <String>) SavedPageNames.get (CurrentIndex).clone();
-    PageManager.PageName = SavedNames.get (CurrentIndex);
-    UpdateAll();
+    SetCloneable ((Cloneable_AsClass) SavedCloneables.get(CurrentIndex).clone());
   }
-  
-  
   
   void Redo() {
     CurrentIndex ++;
-    PageManager.CurrentPage = (ArrayList <String[]>) SavedPages.get (CurrentIndex).clone();
-    PageManager.AllPageNames = (ArrayList <String>) SavedPageNames.get (CurrentIndex).clone();
-    PageManager.PageName = SavedNames.get (CurrentIndex);
-    UpdateAll();
+    SetCloneable ((Cloneable_AsClass) SavedCloneables.get(CurrentIndex).clone());
   }
   
   
   
-  void UpdateAll() {
-    PageManager.ChangesSaved = false;
-    ResetValueElements();
-    PageManager.CalcTotals();
+  boolean CanUndo() {
+    return CurrentIndex > 0;
+  }
+  
+  boolean CanRedo() {
+    return CurrentIndex < SavedCloneables.size() - 1;
   }
   
   
   
   void Reset() {
-    SavedPages = new ArrayList <ArrayList <String[]>> ();
-    SavedPageNames = new ArrayList <ArrayList <String>> ();
-    SavedNames = new ArrayList <String> ();
+    SavedCloneables = new ArrayList <Cloneable_AsClass> ();
     CurrentIndex = -1;
   }
   

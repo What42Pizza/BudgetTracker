@@ -1,7 +1,7 @@
 // Started 01/06/20
-// Last updated 01/24/20
+// Last updated 01/28/20
 
-// V 1.0.2
+// V 1.1.0
 
 
 
@@ -10,6 +10,15 @@
 /*
 
 Change log:
+
+V 1.1.0: 01/28/21
+Added buttons to remove individual rows
+Fixed undo/redo bugs (redid history system)
+Fixed bug with displaying totals after adding / removing rows
+Up to 2000 lines of code!
+
+V 1.0.3: 01/26/21
+Added 'Open Directory' button
 
 V 1.0.2: 01/24/21
 Added 'Open Settings' button
@@ -50,6 +59,13 @@ Finished page editor (mostly)
 
 
 
+
+
+
+
+// Imports
+
+import java.awt.Desktop;
 
 
 
@@ -112,10 +128,10 @@ void setup() {
 void settings() {
   
   Settings.Init();
+  History.MaxUndoChain = Settings.GetInt ("max undo chain", 100);
   PageManager.BasicInit();
   InitGUI();
   PageManager.Init();
-  History.Init();
   
   if (Settings.GetBool("fullscreen", false)) {
     fullScreen();

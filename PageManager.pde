@@ -1,6 +1,6 @@
 PageManager_Class PageManager = new PageManager_Class();
 
-class PageManager_Class {
+class PageManager_Class extends Cloneable_AsClass {
   
   
   
@@ -102,7 +102,7 @@ class PageManager_Class {
     CalcTotals();
     ChangesSaved = true;
     History.Reset();
-    History.AddSavePoint();
+    //History.AddSavePoint();
     //History.SwitchToPage (CurrentPage.get(0));
     
   }
@@ -178,9 +178,11 @@ class PageManager_Class {
     if (!RowToEdit[0].equals(NewName)) {
       RowToEdit[0] = NewName;
       ChangesSaved = false;
+      CurrentPage.add (RowIndex, RowToEdit);
       History.AddSavePoint();
+    } else {
+      CurrentPage.add (RowIndex, RowToEdit); // This has to be in both branches because AddSavePoint need to happen after that row is added back
     }
-    CurrentPage.add (RowIndex, RowToEdit);
   }
   
   
@@ -211,9 +213,14 @@ class PageManager_Class {
     RowTotals.add (0.0);
   }
   
-  void RemoveRow() {
+  void RemoveRowLast() {
     CurrentPage.remove (CurrentPage.size() - 1);
     RowTotals.remove (RowTotals.size() - 1);
+  }
+  
+  void RemoveRow (int Index) {
+    CurrentPage.remove (Index);
+    RowTotals.remove (Index);
   }
   
   
@@ -488,6 +495,31 @@ class PageManager_Class {
       Output[i] = CurrentPage.get(i)[0];
     }
     return Output;
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  @Override
+  public PageManager_Class clone() {
+    
+    // Shallow copy
+    PageManager_Class Output = (PageManager_Class) super.clone();
+    
+    // Deep copy
+    Output.AllPageNames = (ArrayList <String>) AllPageNames.clone();
+    ArrayList <String[]> NewCurrentPage = new ArrayList <String[]> ();
+    for (String[] S : CurrentPage) NewCurrentPage.add ((String[]) S.clone());
+    Output.CurrentPage = NewCurrentPage;
+    
+    return Output;
+    
   }
   
   

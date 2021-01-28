@@ -9,6 +9,7 @@ GUI_Element GUI_PageSelector_CreatePageButton;
 GUI_Element GUI_PageSelector_PagePreset;
 GUI_Element GUI_PageSelector_AllPages;
 GUI_Element GUI_PageSelector_SettingsButton;
+GUI_Element GUI_PageSelector_DirectoryButton;
 
 GUI_Element GUI_PageEditor;
 
@@ -27,6 +28,7 @@ GUI_Element GUI_PageEditor_ColumnTotals;
 GUI_Element GUI_PageEditor_RowNames;
 GUI_Element GUI_PageEditor_RowTotals;
 GUI_Element GUI_PageEditor_PageTotal;
+GUI_Element GUI_PageEditor_RowNamePreset;
 float ValueXSize;
 float ValueYSize;
 
@@ -82,6 +84,7 @@ void LoadGUI() {
   GUI_PageSelector_PagePreset = PagesFrame.Child("PagePreset");
   GUI_PageSelector_AllPages = PagesFrame.Child("AllPages");
   GUI_PageSelector_SettingsButton = GUI_PageSelector.Child("SettingsButton");
+  GUI_PageSelector_DirectoryButton = GUI_PageSelector.Child("DirectoryButton");
   
   
   // PageEditor
@@ -101,6 +104,7 @@ void LoadGUI() {
   GUI_PageEditor_RowNames = ValuesFrame.Child("RowNames");
   GUI_PageEditor_RowTotals = ValuesFrame.Child("RowTotals");
   GUI_PageEditor_PageTotal = ValuesFrame.Child("BottomRightPageTotal");
+  GUI_PageEditor_RowNamePreset = ValuesFrame.Child("RowNamePreset");
   
   GUI_PageEditor_AddRowButton = GUI_PageEditor.Child("AddRowButton");
   GUI_PageEditor_RemoveRowButton = GUI_PageEditor.Child("RemoveRowButton");
@@ -210,9 +214,10 @@ void SetGUIActions() {
   // SaveBeforePageMoveWindow.MoveWOSavingButton
   GUI_SBPMW_MoveWOSavingButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     PageManager.LoadPage (GUI_SBPMW_SelectedPageName.Text);
-      GUI_PageSelector.Enabled = false;
-      GUI_PageEditor.Enabled = true;
-      CloseAllWindows();
+    History.AddSavePoint();
+    GUI_PageSelector.Enabled = false;
+    GUI_PageEditor.Enabled = true;
+    CloseAllWindows();
   }};
   
   
@@ -253,6 +258,7 @@ void SetGUIActions() {
     
     PageManager.AddRow();
     ResetValueElements();
+    PageManager.CalcTotals();
     UpdateTotalElements();
     History.AddSavePoint();
     PageManager.ChangesSaved = false;
@@ -271,8 +277,9 @@ void SetGUIActions() {
   GUI_PageEditor_RemoveRowButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     if (PageManager.CurrentPage.size() == 0) return;
     
-    PageManager.RemoveRow();
+    PageManager.RemoveRowLast();
     ResetValueElements();
+    PageManager.CalcTotals();
     UpdateTotalElements();
     History.AddSavePoint();
     PageManager.ChangesSaved = false;
@@ -303,6 +310,7 @@ void SetGUIActions() {
   GUI_PageSelector_PagePreset.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     if (PageManager.ChangesSaved) {
       PageManager.LoadPage (This.Text);
+      History.AddSavePoint();
       GUI_PageSelector.Enabled = false;
       GUI_PageEditor.Enabled = true;
     } else {
@@ -315,6 +323,12 @@ void SetGUIActions() {
   // PageSelector.SettingsButton
   GUI_PageSelector_SettingsButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
     OpenFileWithEditor (dataPath("") + "/settings.txt");
+  }};
+  
+  
+  // PageSelector.DirectoryButton
+  GUI_PageSelector_DirectoryButton.OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) {
+    OpenFolderWithExplorer (sketchPath(""));
   }};
   
   
@@ -365,7 +379,7 @@ void UpdateGlobalElements() {
   
   
   // UndoButton
-  if (History.CurrentIndex > 0) {
+  if (History.CanUndo()) {
     GUI_PageEditor_UndoButton.CanBePressed = true;
     GUI_PageEditor_UndoButton.BackgroundColor = color (127);
     if (GUI_PageEditor_UndoButton.JustClicked()) {
@@ -379,7 +393,7 @@ void UpdateGlobalElements() {
   
   
   // RedoButton
-  if (History.CurrentIndex < History.SavedPages.size() - 1) {
+  if (History.CanRedo()) {
     GUI_PageEditor_RedoButton.CanBePressed = true;
     GUI_PageEditor_RedoButton.BackgroundColor = color (127);
     if (GUI_PageEditor_RedoButton.JustClicked()) {
@@ -411,6 +425,19 @@ void UpdatePageEditorElements() {
   if (!PageName.TextIsBeingEdited) {
     PageName.Text = PageManager.PageName;
     PageName.PlaceholderText = PageName.Text;
+  }
+  
+  
+  // RowNames.RemoveButton
+  for (int i = 0; i < PageManager.CurrentPage.size(); i ++) {
+    GUI_Element CurrRowName = GUI_PageEditor_RowNames.Child(Integer.toString (i));
+    if (CurrRowName.Child("RemoveButton").JustClicked()) {
+      PageManager.RemoveRow (i);
+      History.AddSavePoint();
+      ResetValueElements();
+      UpdateTotalElements();
+      i --;
+    }
   }
   
   
@@ -512,32 +539,36 @@ void ResetValueElements() {
 
 void ResetRowNames() {
   
-  // Action
+  // Action for name
   Action Action_OnTextFinished = new Action() {@Override public void Run (GUI_Element This) {
-    int RowIndex = Integer.parseInt (This.Name);
+    int RowIndex = Integer.parseInt (This.Parent.Name);
     PageManager.SetRowName (RowIndex, This.Text);
   }};
   
+  /*
+  // Action for button
+  Action Action_OnButtonPressed = new Action() {@Override public void Run (GUI_Element This) { // DON'T EDIT FAMILY TREE IN ACTIONS!
+    int RowIndex = Integer.parseInt (This.Parent.Name);
+    PageManager.RemoveRow (RowIndex);
+    ResetValueElements();
+  }};
+  */
+  
   // Set scroll
   GUI_PageEditor_RowNames.MaxScrollY = max (PageManager.CurrentPage.size() * ValueYSize - 1, 0);
-  
-  // Create preset
-  GUI_Element RowNamePreset = new GUI_Element ("TextBox", "RNP");
-  RowNamePreset.XPos = 0;
-  RowNamePreset.XSize = 1;
-  RowNamePreset.YSize = ValueYSize;
-  RowNamePreset.XPixelOffset = 1;
-  RowNamePreset.XSizePixelOffset = -2;
   
   // Create individual elements
   GUI_PageEditor_RowNames.DeleteChildren();
   String[] RowNames = PageManager.GetRowNames();
   for (int i = 0; i < RowNames.length; i ++) {
-    GUI_Element NewRowName = (GUI_Element) RowNamePreset.clone();
+    GUI_Element NewRowName = (GUI_Element) GUI_PageEditor_RowNamePreset.clone();
     NewRowName.Name = Integer.toString(i);
-    NewRowName.Text = RowNames[i];
     NewRowName.YPos = ValueYSize * i;
-    NewRowName.OnTextFinished = Action_OnTextFinished;
+    NewRowName.YSize = ValueYSize;
+    NewRowName.Child("RowName").Text = RowNames[i];
+    NewRowName.Child("RowName").OnTextFinished = Action_OnTextFinished;
+    //NewRowName.Child("RemoveButton").OnButtonPressed = Action_OnButtonPressed;
+    NewRowName.Enabled = true;
     GUI_PageEditor_RowNames.AddChild (NewRowName);
   }
   
@@ -565,6 +596,7 @@ void ResetRowTotals() {
     GUI_Element NewRowName = (GUI_Element) RowTotalPreset.clone();
     NewRowName.Name = Integer.toString(i);
     NewRowName.YPos = ValueYSize * i;
+    //NewRowName.Text = Float.toString (PageManager.RowTotals.get(i)); // gives null pointer exception?
     GUI_PageEditor_RowTotals.AddChild (NewRowName);
   }
   
@@ -776,5 +808,21 @@ void OpenFileWithEditor (String FilePath) {
     println (e);
   }
   */
+  
+}
+
+
+
+
+
+void OpenFolderWithExplorer (String FilePath) {
+  
+  // This is from https://stackoverflow.com/questions/15875295/open-a-folder-in-explorer-using-java
+  try {
+    Desktop.getDesktop().open(new File(FilePath));
+  } catch (IOException e) {
+    println ("Error while opening " + FilePath + ": " + e);
+    e.printStackTrace();
+  }
   
 }

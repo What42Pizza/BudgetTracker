@@ -1,0 +1,17 @@
+Name:
+RowName
+
+ElementType:
+TextBox
+
+XPos:
+0.25
+YPos:
+0
+XSize:
+0.75
+YSize:
+1
+
+XSizePixelOffset:
+-1
